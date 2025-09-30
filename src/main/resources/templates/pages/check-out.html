@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thanh toán</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div th:replace="fragments/navbar :: siteHeader"></div>
+
+  <main class="py-4">
+    <div class="container">
+      <h3 class="mb-3">Thanh toán</h3>
+      <div class="row g-4">
+        <!-- thông tin người nhận -->
+        <div class="col-lg-8">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Thông tin người nhận</h5>
+              <form>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Họ và tên</label>
+                    <input type="text" class="form-control" placeholder="Nguyễn Văn A">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Số điện thoại</label>
+                    <input type="tel" class="form-control" placeholder="09xx xxx xxx">
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" placeholder="you@example.com">
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">Địa chỉ</label>
+                    <input type="text" class="form-control" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Phương thức thanh toán</label>
+                    <select class="form-select">
+                      <option>COD - Thanh toán khi nhận hàng</option>
+                      <option>Chuyển khoản</option>
+                      <option>Ví điện tử</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Ghi chú</label>
+                    <input type="text" class="form-control" placeholder="Giao giờ hành chính...">
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <!-- tóm tắt đơn hàng -->
+        <div class="col-lg-4">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Đơn hàng</h5>
+              <div id="orderItems"></div>
+              <div class="d-flex justify-content-between border-top pt-2">
+                <span>Tạm tính</span><strong id="ckSubtotal">0 đ</strong>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span>Giảm giá</span><strong id="ckDiscount" class="text-success">0 đ</strong>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span>Phí vận chuyển</span><strong id="ckShipping">0 đ</strong>
+              </div>
+              <div class="d-flex justify-content-between border-top pt-2 mt-2">
+                <span>Thành tiền</span><strong id="ckTotal" class="fs-5">0 đ</strong>
+              </div>
+              <button id="btnPlaceOrder" class="btn btn-dark w-100 mt-3">Đặt hàng</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div th:replace="fragments/footer :: siteFooter"></div>
+
+  <script>
+    function vnd(n){ try{ return new Intl.NumberFormat('vi-VN').format(n)+' đ'; }catch(e){ return n+' đ'; } }
+    function loadCart(){ try{ return JSON.parse(localStorage.getItem('cart')||'[]'); }catch(e){ return []; } }
+    function renderCheckout(){
+      const wrap = document.getElementById('orderItems');
+      const items = loadCart();
+      wrap.innerHTML = '';
+      items.forEach(it=>{
+        const row = document.createElement('div');
+        row.className = 'd-flex align-items-center justify-content-between mb-2';
+        row.innerHTML = `
+          <div class="d-flex align-items-center gap-2">
+            <img src="${it.img}" width="54" height="54" class="rounded" style="object-fit:cover" alt="img">
+            <div>
+              <div class="small">${it.title} x${it.qty||1}</div>
+              <div class="text-muted small">${it.color?`Màu: ${it.color} • `:''}${it.size?`Size: ${it.size}`:''}</div>
+              <div class="text-muted small">${vnd(it.price)}</div>
+            </div>
+          </div>
+          <span>${vnd((it.price||0) * (it.qty||1))}</span>
+        `;
+        wrap.appendChild(row);
+      });
+      const subtotal = items.reduce((s,i)=> s + (i.price||0) * (parseInt(i.qty||1)||1), 0);
+      const discount = 0; // demo
+      const shipping = subtotal>0 ? 30000 : 0;
+      const total = subtotal - discount + shipping;
+      document.getElementById('ckSubtotal').textContent = vnd(subtotal);
+      document.getElementById('ckDiscount').textContent = '-' + vnd(discount).replace(' đ',' đ');
+      document.getElementById('ckShipping').textContent = vnd(shipping);
+      document.getElementById('ckTotal').textContent = vnd(total);
+    }
+    document.addEventListener('DOMContentLoaded', function(){
+      renderCheckout();
+      // Đặt hàng demo: clear cart và quay về order-list
+      const btn = document.getElementById('btnPlaceOrder');
+      if(btn){
+        btn.addEventListener('click', function(){
+          alert('Đặt hàng thành công (demo)!');
+          localStorage.removeItem('cart');
+          window.location.href = '/pages/thank-you';
+        });
+      }
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

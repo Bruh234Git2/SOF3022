@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chi tiết đơn hàng</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div th:replace="fragments/navbar :: siteHeader"></div>
+
+  <main class="py-4">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">Đơn hàng #ORD-202509-001</h3>
+        <span class="badge bg-success">Hoàn thành</span>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Sản phẩm</h5>
+              <div class="table-responsive">
+                <table class="table align-middle">
+                  <thead>
+                    <tr>
+                      <th>Sản phẩm</th>
+                      <th class="text-center">SL</th>
+                      <th class="text-end">Đơn giá</th>
+                      <th class="text-end">Thành tiền</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+                        <div class="d-flex align-items-center gap-3">
+                          <img src="https://media.routine.vn/400x0/prod/variant/10f25shs008-green-1-jpg-7wdk.webp" width="60" height="60" class="rounded" style="object-fit:cover" alt="shirt">
+                          <div>
+                            <div class="fw-semibold">Smart Shirt - Xanh, M</div>
+                            <div class="text-muted small">SKU: SHS008</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="text-center">1</td>
+                      <td class="text-end">349.000 đ</td>
+                      <td class="text-end">349.000 đ</td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <div class="d-flex align-items-center gap-3">
+                          <img src="https://down-vn.img.susercontent.com/file/vn-11134208-7ras8-mdk2na812mnjaa" width="60" height="60" class="rounded" style="object-fit:cover" alt="polo">
+                          <div>
+                            <div class="fw-semibold">Polo Pique - Trắng, L</div>
+                            <div class="text-muted small">SKU: POLO001</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="text-center">2</td>
+                      <td class="text-end">299.000 đ</td>
+                      <td class="text-end">598.000 đ</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card mb-3">
+            <div class="card-body">
+              <h5 class="card-title">Tổng cộng</h5>
+              <div class="d-flex justify-content-between"><span>Tạm tính</span><strong>947.000 đ</strong></div>
+              <div class="d-flex justify-content-between"><span>Giảm giá</span><strong class="text-success">-50.000 đ</strong></div>
+              <div class="d-flex justify-content-between"><span>Phí vận chuyển</span><strong>30.000 đ</strong></div>
+              <div class="d-flex justify-content-between border-top pt-2 mt-2">
+                <span>Thành tiền</span><strong class="fs-5">927.000 đ</strong>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Thông tin giao hàng</h5>
+              <div class="small text-muted">Nguyễn Văn A</div>
+              <div class="small text-muted">09xx xxx xxx</div>
+              <div class="small text-muted">you@example.com</div>
+              <div class="small text-muted">123 Trần Duy Hưng, Cầu Giấy, Hà Nội</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <div th:replace="fragments/footer :: siteFooter"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

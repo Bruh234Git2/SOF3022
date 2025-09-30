@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin - Quản lý loại hàng</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div th:replace="fragments/navbar :: siteHeader"></div>
+
+  <main class="py-4">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">Loại hàng</h3>
+        <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#modalCategory">Thêm loại</button>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th>Mã</th>
+                  <th>Tên loại</th>
+                  <th>Mô tả</th>
+                  <th class="text-end">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="catBody">
+                <!-- render bằng JS demo -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal fade" id="modalCategory" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Loại hàng</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Mã</label>
+            <input id="catId" type="text" class="form-control" placeholder="CAT001">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Tên loại</label>
+            <input id="catName" type="text" class="form-control" placeholder="Áo sơ mi">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Mô tả</label>
+            <textarea id="catDesc" class="form-control" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Hủy</button>
+          <button type="button" class="btn btn-dark" id="btnSaveCat">Lưu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div th:replace="fragments/footer :: siteFooter"></div>
+
+  <script>
+    const CAT_KEY = 'admin_categories';
+    function loadCats(){ try{ return JSON.parse(localStorage.getItem(CAT_KEY)||'[]'); }catch(e){ return []; } }
+    function saveCats(list){ localStorage.setItem(CAT_KEY, JSON.stringify(list)); }
+    function renderCats(){
+      const body = document.getElementById('catBody');
+      const list = loadCats();
+      body.innerHTML = '';
+      list.forEach((c,idx)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${c.id}</td>
+          <td>${c.name}</td>
+          <td>${c.desc||''}</td>
+          <td class="text-end">
+            <button class="btn btn-sm btn-outline-secondary me-1" data-action="edit" data-index="${idx}">Sửa</button>
+            <button class="btn btn-sm btn-outline-danger" data-action="del" data-index="${idx}">Xóa</button>
+          </td>`;
+        body.appendChild(tr);
+      });
+      body.querySelectorAll('[data-action]')?.forEach(btn=>{
+        btn.addEventListener('click', function(){
+          const idx = parseInt(this.dataset.index);
+          const list = loadCats();
+          if(this.dataset.action==='edit'){
+            const c = list[idx];
+            document.getElementById('catId').value = c.id;
+            document.getElementById('catName').value = c.name;
+            document.getElementById('catDesc').value = c.desc||'';
+            new bootstrap.Modal(document.getElementById('modalCategory')).show();
+            document.getElementById('btnSaveCat').onclick = ()=>{
+              c.id = document.getElementById('catId').value.trim();
+              c.name = document.getElementById('catName').value.trim();
+              c.desc = document.getElementById('catDesc').value.trim();
+              saveCats(list); renderCats(); bootstrap.Modal.getInstance(document.getElementById('modalCategory')).hide();
+            };
+          }
+          if(this.dataset.action==='del'){
+            if(confirm('Xóa loại này?')){ list.splice(idx,1); saveCats(list); renderCats(); }
+          }
+        });
+      });
+    }
+    document.addEventListener('DOMContentLoaded', function(){
+      renderCats();
+      document.getElementById('btnSaveCat').addEventListener('click', function(){
+        const list = loadCats();
+        list.push({id: catId.value.trim(), name: catName.value.trim(), desc: catDesc.value.trim()});
+        saveCats(list); renderCats();
+        bootstrap.Modal.getInstance(document.getElementById('modalCategory')).hide();
+        catId.value = catName.value = catDesc.value = '';
+      });
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin - Quản lý đơn hàng</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div th:replace="fragments/navbar :: siteHeader"></div>
+
+  <main class="py-4">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">Đơn hàng</h3>
+        <div>
+          <button class="btn btn-outline-secondary me-2" id="btnSeed">Seed demo</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="row g-2 mb-3">
+            <div class="col-md-3">
+              <select id="statusFilter" class="form-select">
+                <option value="">Tất cả trạng thái</option>
+                <option value="pending">Chờ xác nhận</option>
+                <option value="shipping">Đang giao</option>
+                <option value="completed">Hoàn thành</option>
+                <option value="canceled">Đã hủy</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th>Mã đơn</th>
+                  <th>Ngày</th>
+                  <th>Khách hàng</th>
+                  <th class="text-end">Tổng tiền</th>
+                  <th>Trạng thái</th>
+                  <th class="text-end">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="orderBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal fade" id="modalOrder" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Cập nhật đơn hàng</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Mã đơn</label>
+            <input id="oId" type="text" class="form-control" readonly>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Trạng thái</label>
+            <select id="oStatus" class="form-select">
+              <option value="pending">Chờ xác nhận</option>
+              <option value="shipping">Đang giao</option>
+              <option value="completed">Hoàn thành</option>
+              <option value="canceled">Đã hủy</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Hủy</button>
+          <button type="button" class="btn btn-dark" id="btnSaveOrder">Lưu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div th:replace="fragments/footer :: siteFooter"></div>
+
+  <script>
+    const ORDER_KEY = 'admin_orders';
+    function loadOrders(){ try{ return JSON.parse(localStorage.getItem(ORDER_KEY)||'[]'); }catch(e){ return []; } }
+    function saveOrders(list){ localStorage.setItem(ORDER_KEY, JSON.stringify(list)); }
+    function money(n){ try{ return new Intl.NumberFormat('vi-VN').format(n)+' đ'; }catch(e){ return n; } }
+
+    function renderOrders(){
+      const st = document.getElementById('statusFilter').value;
+      const body = document.getElementById('orderBody');
+      const list = loadOrders().filter(o=> !st || o.status===st);
+      body.innerHTML = '';
+      list.forEach((o,idx)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${o.id}</td>
+          <td>${o.date||''}</td>
+          <td>${o.customer||''}</td>
+          <td class="text-end">${money(o.total||0)}</td>
+          <td>${labelStatus(o.status)}</td>
+          <td class="text-end">
+            <button class="btn btn-sm btn-outline-secondary" data-index="${idx}" data-action="edit">Cập nhật</button>
+          </td>`;
+        body.appendChild(tr);
+      });
+      body.querySelectorAll('[data-action="edit"]').forEach(btn=>{
+        btn.addEventListener('click', function(){
+          const idx = parseInt(this.dataset.index);
+          const list = loadOrders();
+          const o = list[idx];
+          oId.value = o.id; oStatus.value = o.status;
+          new bootstrap.Modal(modalOrder).show();
+          btnSaveOrder.onclick = ()=>{ o.status = oStatus.value; saveOrders(list); renderOrders(); bootstrap.Modal.getInstance(modalOrder).hide(); };
+        });
+      });
+    }
+    function labelStatus(st){
+      const map={pending:'<span class="badge bg-warning text-dark">Chờ xác nhận</span>', shipping:'<span class="badge bg-info text-dark">Đang giao</span>', completed:'<span class="badge bg-success">Hoàn thành</span>', canceled:'<span class="badge bg-secondary">Đã hủy</span>'};
+      return map[st]||st;
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+      statusFilter.addEventListener('change', renderOrders);
+      btnSeed.addEventListener('click', function(){
+        if(!confirm('Seed demo đơn hàng?')) return;
+        saveOrders([
+          {id:'ORD-001', date:'30/09/2025', customer:'Demo User', total:927000, status:'completed'},
+          {id:'ORD-002', date:'15/09/2025', customer:'Demo User', total:548000, status:'shipping'},
+          {id:'ORD-003', date:'10/09/2025', customer:'Nguyễn An', total:1200000, status:'pending'}
+        ]); renderOrders();
+      });
+      renderOrders();
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

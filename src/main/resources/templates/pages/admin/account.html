@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin - Quản lý tài khoản</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div th:replace="fragments/navbar :: siteHeader"></div>
+
+  <main class="py-4">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">Tài khoản</h3>
+        <div>
+          <button class="btn btn-outline-secondary me-2" id="btnSeed">Seed demo</button>
+          <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#modalAccount">Thêm tài khoản</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="row g-2 mb-3">
+            <div class="col-md-4"><input id="kw" class="form-control" placeholder="Tìm theo email hoặc tên..."></div>
+            <div class="col-md-3">
+              <select id="roleFilter" class="form-select">
+                <option value="">Tất cả quyền</option>
+                <option value="admin">Admin</option>
+                <option value="user">User</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Họ tên</th>
+                  <th>Quyền</th>
+                  <th class="text-end">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="accBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal fade" id="modalAccount" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Tài khoản</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input id="aEmail" class="form-control" placeholder="you@example.com">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Họ tên</label>
+            <input id="aName" class="form-control" placeholder="Nguyễn Văn A">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Quyền</label>
+            <select id="aRole" class="form-select">
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline-dark" data-bs-dismiss="modal">Hủy</button>
+          <button class="btn btn-dark" id="btnSaveAcc">Lưu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div th:replace="fragments/footer :: siteFooter"></div>
+
+  <script>
+    const ACC_KEY = 'admin_accounts';
+    function loadAcc(){ try{ return JSON.parse(localStorage.getItem(ACC_KEY)||'[]'); }catch(e){ return []; } }
+    function saveAcc(list){ localStorage.setItem(ACC_KEY, JSON.stringify(list)); }
+
+    function renderAcc(){
+      const kw = (document.getElementById('kw').value||'').toLowerCase();
+      const rf = document.getElementById('roleFilter').value;
+      const body = document.getElementById('accBody');
+      const list = loadAcc().filter(a=> (!rf || a.role===rf) && (a.email?.toLowerCase().includes(kw) || a.name?.toLowerCase().includes(kw)));
+      body.innerHTML = '';
+      list.forEach((a,idx)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${a.email}</td>
+          <td>${a.name||''}</td>
+          <td>${a.role||'user'}</td>
+          <td class="text-end">
+            <button class="btn btn-sm btn-outline-secondary me-1" data-action="edit" data-index="${idx}">Sửa</button>
+            <button class="btn btn-sm btn-outline-danger" data-action="del" data-index="${idx}">Xóa</button>
+          </td>`;
+        body.appendChild(tr);
+      });
+      body.querySelectorAll('[data-action]').forEach(btn=>{
+        btn.addEventListener('click', function(){
+          const idx = parseInt(this.dataset.index);
+          const list = loadAcc();
+          if(this.dataset.action==='edit'){
+            const a = list[idx]; aEmail.value=a.email; aName.value=a.name; aRole.value=a.role||'user';
+            new bootstrap.Modal(modalAccount).show();
+            btnSaveAcc.onclick=()=>{ a.email=aEmail.value.trim(); a.name=aName.value.trim(); a.role=aRole.value; saveAcc(list); renderAcc(); bootstrap.Modal.getInstance(modalAccount).hide(); };
+          }
+          if(this.dataset.action==='del'){
+            if(confirm('Xóa tài khoản này?')){ list.splice(idx,1); saveAcc(list); renderAcc(); }
+          }
+        });
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+      roleFilter.addEventListener('change', renderAcc);
+      kw.addEventListener('input', renderAcc);
+      btnSaveAcc.addEventListener('click', function(){
+        const list = loadAcc();
+        list.push({email:aEmail.value.trim(), name:aName.value.trim(), role:aRole.value});
+        saveAcc(list); renderAcc(); bootstrap.Modal.getInstance(modalAccount).hide();
+        aEmail.value=aName.value=''; aRole.value='user';
+      });
+      btnSeed.addEventListener('click', function(){
+        if(!confirm('Seed demo tài khoản?')) return;
+        saveAcc([
+          {email:'demo@shop.omg', name:'Demo User', role:'user'},
+          {email:'admin@shop.omg', name:'Quản trị', role:'admin'}
+        ]); renderAcc();
+      });
+      renderAcc();
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

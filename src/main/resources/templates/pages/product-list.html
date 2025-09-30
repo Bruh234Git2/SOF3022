@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Khuyến mãi - Danh sách sản phẩm</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div th:replace="fragments/navbar :: siteHeader"></div>
+
+  <main class="py-4">
+    <div class="container">
+      <!-- breadcrumb + tổng số -->
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+              <li class="breadcrumb-item"><a th:href="@{/pages/home}">Trang chủ</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Ưu đãi</li>
+            </ol>
+          </nav>
+          <div class="text-muted small">39 Sản phẩm</div>
+        </div>
+        <!-- view tools -->
+        <div class="d-flex gap-2 align-items-center">
+          <button class="btn btn-sm btn-outline-secondary">Bộ lọc</button>
+          <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">Sắp xếp</button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="#">Phổ biến</a></li>
+              <li><a class="dropdown-item" href="#">Giá thấp - cao</a></li>
+              <li><a class="dropdown-item" href="#">Giá cao - thấp</a></li>
+              <li><a class="dropdown-item" href="#">Mới nhất</a></li>
+            </ul>
+          </div>
+          <div class="btn-group" role="group">
+            <button class="btn btn-sm btn-outline-secondary active">Lưới</button>
+            <button class="btn btn-sm btn-outline-secondary">Danh sách</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- grid sản phẩm -->
+      <div class="row g-3">
+        <!-- Thẻ sản phẩm mẫu (duplicate để đủ 8-12 item cho UI) -->
+        <!-- item 1 -->
+        <div class="col-6 col-md-4 col-lg-3">
+          <div class="card h-100">
+            <div class="position-relative">
+              <span class="badge bg-danger position-absolute top-0 start-0 m-2">-25%</span>
+              <a class="to-detail" href="#" data-id="p1" data-title="Áo Sơ Mi Nam Smart shirt Tay Ngắn" data-price="349000" data-img="https://media.routine.vn/1200x1500/prod/variant/10f25shs008-green-1-jpg-7wdk.webp"><img src="https://media.routine.vn/1200x1500/prod/variant/10f25shs008-green-1-jpg-7wdk.webp" class="card-img-top" alt="shirt"></a>
+              <button class="btn btn-light position-absolute bottom-0 end-0 m-2 rounded-circle add-to-cart" 
+                data-id="p1" data-title="Smart Shirt - Xanh, M" data-price="349000" 
+                data-img="https://media.routine.vn/1200x1500/prod/variant/10f25shs008-green-1-jpg-7wdk.webp">+</button>
+            </div>
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <strong>349.000 đ</strong>
+                <span class="text-muted text-decoration-line-through small">441.000 đ</span>
+              </div>
+              <h6 class="card-title mb-2"><a class="stretched-link text-reset to-detail" href="#" data-id="p1" data-title="Áo Sơ Mi Nam Smart shirt Tay Ngắn" data-price="349000" data-img="https://media.routine.vn/1200x1500/prod/variant/10f25shs008-green-1-jpg-7wdk.webp">Áo Sơ Mi Nam Smart shirt Tay Ngắn</a></h6>
+              <div class="d-flex gap-1">
+                <span class="border rounded px-2 py-1 small">S</span>
+                <span class="border rounded px-2 py-1 small">M</span>
+                <span class="border rounded px-2 py-1 small">L</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Các item mẫu khác -->
+        <!-- Lặp lại cho đủ grid (8 sản phẩm) -->
+        <div class="col-6 col-md-4 col-lg-3">
+          <div class="card h-100">
+            <div class="position-relative">
+              <span class="badge bg-danger position-absolute top-0 start-0 m-2">-15%</span>
+              <a class="to-detail" href="#" data-id="p2" data-title="Áo Sơ Mi Nam Smart shirt Tay Dài" data-price="399000" data-img="https://product.hstatic.net/1000008082/product/s1_9c03fadfc6ff42fcbdedf9818ea1916c_master.jpeg"><img src="https://product.hstatic.net/1000008082/product/s1_9c03fadfc6ff42fcbdedf9818ea1916c_master.jpeg" class="card-img-top" alt="shirt"></a>
+              <button class="btn btn-light position-absolute bottom-0 end-0 m-2 rounded-circle add-to-cart"
+                data-id="p2" data-title="Smart Shirt Tay Dài" data-price="399000"
+                data-img="https://product.hstatic.net/1000008082/product/s1_9c03fadfc6ff42fcbdedf9818ea1916c_master.jpeg">+</button>
+            </div>
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <strong>399.000 đ</strong>
+                <span class="text-muted text-decoration-line-through small">471.000 đ</span>
+              </div>
+              <h6 class="card-title mb-2"><a class="stretched-link text-reset to-detail" href="#" data-id="p2" data-title="Áo Sơ Mi Nam Smart shirt Tay Dài" data-price="399000" data-img="https://product.hstatic.net/1000008082/product/s1_9c03fadfc6ff42fcbdedf9818ea1916c_master.jpeg">Áo Sơ Mi Nam Smart shirt Tay Dài</a></h6>
+              <div class="d-flex gap-1">
+                <span class="border rounded px-2 py-1 small">M</span>
+                <span class="border rounded px-2 py-1 small">L</span>
+                <span class="border rounded px-2 py-1 small">XL</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-lg-3">
+          <div class="card h-100">
+            <div class="position-relative">
+              <span class="badge bg-danger position-absolute top-0 start-0 m-2">-20%</span>
+              <a class="to-detail" href="#" data-id="p3" data-title="Áo Sơ Mi Oxford Basic" data-price="359000" data-img="https://dongphucpanda.com/wp-content/uploads/2025/09/1025-so-mi-oxford-bst-verse-basic-hong.jpg"><img src="https://dongphucpanda.com/wp-content/uploads/2025/09/1025-so-mi-oxford-bst-verse-basic-hong.jpg" class="card-img-top" alt="shirt"></a>
+              <button class="btn btn-light position-absolute bottom-0 end-0 m-2 rounded-circle add-to-cart"
+                data-id="p3" data-title="Oxford Basic Hồng" data-price="359000"
+                data-img="https://dongphucpanda.com/wp-content/uploads/2025/09/1025-so-mi-oxford-bst-verse-basic-hong.jpg">+</button>
+            </div>
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <strong>359.000 đ</strong>
+                <span class="text-muted text-decoration-line-through small">449.000 đ</span>
+              </div>
+              <h6 class="card-title mb-2"><a class="stretched-link text-reset to-detail" href="#" data-id="p3" data-title="Áo Sơ Mi Oxford Basic" data-price="359000" data-img="https://dongphucpanda.com/wp-content/uploads/2025/09/1025-so-mi-oxford-bst-verse-basic-hong.jpg">Áo Sơ Mi Oxford Basic</a></h6>
+              <div class="d-flex gap-1">
+                <span class="border rounded px-2 py-1 small">S</span>
+                <span class="border rounded px-2 py-1 small">M</span>
+                <span class="border rounded px-2 py-1 small">L</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-lg-3">
+          <div class="card h-100">
+            <div class="position-relative">
+              <span class="badge bg-danger position-absolute top-0 start-0 m-2">-30%</span>
+              <a class="to-detail" href="#" data-id="p4" data-title="Áo Polo Cotton" data-price="299000" data-img="https://product.hstatic.net/200000309959/product/ao-polo-nam-cotton-basic-luxsion-lich-lam-7_95e0a803e7264c17b63d4656ddd4edc0_master.png"><img src="https://product.hstatic.net/200000309959/product/ao-polo-nam-cotton-basic-luxsion-lich-lam-7_95e0a803e7264c17b63d4656ddd4edc0_master.png" class="card-img-top" alt="shirt"></a>
+              <button class="btn btn-light position-absolute bottom-0 end-0 m-2 rounded-circle add-to-cart"
+                data-id="p4" data-title="Polo Cotton" data-price="299000"
+                data-img="https://product.hstatic.net/200000309959/product/ao-polo-nam-cotton-basic-luxsion-lich-lam-7_95e0a803e7264c17b63d4656ddd4edc0_master.png">+</button>
+            </div>
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <strong>299.000 đ</strong>
+                <span class="text-muted text-decoration-line-through small">429.000 đ</span>
+              </div>
+              <h6 class="card-title mb-2"><a class="stretched-link text-reset to-detail" href="#" data-id="p4" data-title="Áo Polo Cotton" data-price="299000" data-img="https://product.hstatic.net/200000309959/product/ao-polo-nam-cotton-basic-luxsion-lich-lam-7_95e0a803e7264c17b63d4656ddd4edc0_master.png">Áo Polo Cotton</a></h6>
+              <div class="d-flex gap-1">
+                <span class="border rounded px-2 py-1 small">S</span>
+                <span class="border rounded px-2 py-1 small">M</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- thêm 4 item để đủ 8 cho màn hình lớn -->
+        <div class="col-6 col-md-4 col-lg-3">
+          <div class="card h-100">
+            <div class="position-relative">
+              <span class="badge bg-danger position-absolute top-0 start-0 m-2">-10%</span>
+              <a class="to-detail" href="#" data-id="p5" data-title="Tee Graphic" data-price="269000" data-img="https://www.acfc.com.vn/acfc_wp/wp-content/uploads/2024/07/graphic-tee-da-dang-mau-ma.webp"><img src="https://www.acfc.com.vn/acfc_wp/wp-content/uploads/2024/07/graphic-tee-da-dang-mau-ma.webp" class="card-img-top" alt="shirt"></a>
+              <button class="btn btn-light position-absolute bottom-0 end-0 m-2 rounded-circle add-to-cart"
+                data-id="p5" data-title="Tee Graphic" data-price="269000"
+                data-img="https://www.acfc.com.vn/acfc_wp/wp-content/uploads/2024/07/graphic-tee-da-dang-mau-ma.webp">+</button>
+            </div>
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <strong>269.000 đ</strong>
+                <span class="text-muted text-decoration-line-through small">299.000 đ</span>
+              </div>
+              <h6 class="card-title mb-2"><a class="stretched-link text-reset to-detail" href="#" data-id="p5" data-title="Tee Graphic" data-price="269000" data-img="https://www.acfc.com.vn/acfc_wp/wp-content/uploads/2024/07/graphic-tee-da-dang-mau-ma.webp">Tee Graphic</a></h6>
+              <div class="d-flex gap-1">
+                <span class="border rounded px-2 py-1 small">L</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-lg-3">
+          <div class="card h-100">
+            <div class="position-relative">
+              <span class="badge bg-danger position-absolute top-0 start-0 m-2">-18%</span>
+              <a class="to-detail" href="#" data-id="p6" data-title="Áo Sơ Mi Kẻ" data-price="379000" data-img="https://lados.vn/wp-content/uploads/2024/10/kieu-ao-so-mi-ke-soc-nam-jpg.webp"><img src="https://lados.vn/wp-content/uploads/2024/10/kieu-ao-so-mi-ke-soc-nam-jpg.webp" class="card-img-top" alt="shirt"></a>
+              <button class="btn btn-light position-absolute bottom-0 end-0 m-2 rounded-circle add-to-cart"
+                data-id="p6" data-title="Sơ Mi Kẻ" data-price="379000"
+                data-img="https://lados.vn/wp-content/uploads/2024/10/kieu-ao-so-mi-ke-soc-nam-jpg.webp">+</button>
+            </div>
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <strong>379.000 đ</strong>
+                <span class="text-muted text-decoration-line-through small">459.000 đ</span>
+              </div>
+              <h6 class="card-title mb-2"><a class="stretched-link text-reset to-detail" href="#" data-id="p6" data-title="Áo Sơ Mi Kẻ" data-price="379000" data-img="https://lados.vn/wp-content/uploads/2024/10/kieu-ao-so-mi-ke-soc-nam-jpg.webp">Áo Sơ Mi Kẻ</a></h6>
+              <div class="d-flex gap-1">
+                <span class="border rounded px-2 py-1 small">M</span>
+                <span class="border rounded px-2 py-1 small">L</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-lg-3">
+          <div class="card h-100">
+            <div class="position-relative">
+              <span class="badge bg-danger position-absolute top-0 start-0 m-2">-12%</span>
+              <a class="to-detail" href="#" data-id="p7" data-title="Áo Sơ Mi Linen" data-price="319000" data-img="https://media.routine.vn/400x0/prod/media/ao-so-mi-linen-nam-jpg-9810.webp"><img src="https://media.routine.vn/400x0/prod/media/ao-so-mi-linen-nam-jpg-9810.webp" class="card-img-top" alt="shirt"></a>
+              <button class="btn btn-light position-absolute bottom-0 end-0 m-2 rounded-circle add-to-cart"
+                data-id="p7" data-title="Sơ Mi Linen" data-price="319000"
+                data-img="https://media.routine.vn/400x0/prod/media/ao-so-mi-linen-nam-jpg-9810.webp">+</button>
+            </div>
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <strong>319.000 đ</strong>
+                <span class="text-muted text-decoration-line-through small">359.000 đ</span>
+              </div>
+              <h6 class="card-title mb-2"><a class="stretched-link text-reset to-detail" href="#" data-id="p7" data-title="Áo Sơ Mi Linen" data-price="319000" data-img="https://media.routine.vn/400x0/prod/media/ao-so-mi-linen-nam-jpg-9810.webp">Áo Sơ Mi Linen</a></h6>
+              <div class="d-flex gap-1">
+                <span class="border rounded px-2 py-1 small">S</span>
+                <span class="border rounded px-2 py-1 small">M</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-lg-3">
+          <div class="card h-100">
+            <div class="position-relative">
+              <span class="badge bg-danger position-absolute top-0 start-0 m-2">-22%</span>
+              <a class="to-detail" href="#" data-id="p8" data-title="Áo Sơ Mi Poplin" data-price="339000" data-img="https://n7media.coolmate.me/uploads/September2025/ao-so-mi-nam-dai-tay-premium-poplin-100-cotton-chong-nhan-truot-nuoc-xanh-indigo-4.jpg"><img src="https://n7media.coolmate.me/uploads/September2025/ao-so-mi-nam-dai-tay-premium-poplin-100-cotton-chong-nhan-truot-nuoc-xanh-indigo-4.jpg" class="card-img-top" alt="shirt"></a>
+              <button class="btn btn-light position-absolute bottom-0 end-0 m-2 rounded-circle add-to-cart"
+                data-id="p8" data-title="Sơ Mi Poplin" data-price="339000"
+                data-img="https://n7media.coolmate.me/uploads/September2025/ao-so-mi-nam-dai-tay-premium-poplin-100-cotton-chong-nhan-truot-nuoc-xanh-indigo-4.jpg">+</button>
+            </div>
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <strong>339.000 đ</strong>
+                <span class="text-muted text-decoration-line-through small">435.000 đ</span>
+              </div>
+              <h6 class="card-title mb-2"><a class="stretched-link text-reset to-detail" href="#" data-id="p8" data-title="Áo Sơ Mi Poplin" data-price="339000" data-img="https://n7media.coolmate.me/uploads/September2025/ao-so-mi-nam-dai-tay-premium-poplin-100-cotton-chong-nhan-truot-nuoc-xanh-indigo-4.jpg">Áo Sơ Mi Poplin</a></h6>
+              <div class="d-flex gap-1">
+                <span class="border rounded px-2 py-1 small">M</span>
+                <span class="border rounded px-2 py-1 small">L</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- phân trang demo -->
+      <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+          <li class="page-item disabled"><a class="page-link">Trước</a></li>
+          <li class="page-item active"><a class="page-link" href="#">1</a></li>
+          <li class="page-item"><a class="page-link" href="#">2</a></li>
+          <li class="page-item"><a class="page-link" href="#">3</a></li>
+          <li class="page-item"><a class="page-link" href="#">Sau</a></li>
+        </ul>
+      </nav>
+    </div>
+  </main>
+
+  <div th:replace="fragments/footer :: siteFooter"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Simple add-to-cart using localStorage
+    (function(){
+      function updateBadge(){
+        const badge = document.getElementById('cartCountBadge');
+        try{
+          const cart = JSON.parse(localStorage.getItem('cart')||'[]');
+          const count = cart.reduce((s,i)=>s+(parseInt(i.qty||1)||1),0);
+          if(badge){
+            if(count>0){ badge.style.display='inline-block'; badge.textContent = count; }
+            else { badge.style.display='none'; }
+          }
+        }catch(e){}
+      }
+      function addItem(data){
+        const cart = JSON.parse(localStorage.getItem('cart')||'[]');
+        const idx = cart.findIndex(x=>x.id===data.id);
+        if(idx>-1){ cart[idx].qty = (parseInt(cart[idx].qty||1)||1) + 1; }
+        else { cart.push({id:data.id, title:data.title, price:data.price, img:data.img, qty:1}); }
+        localStorage.setItem('cart', JSON.stringify(cart));
+        updateBadge();
+      }
+      document.querySelectorAll('.add-to-cart').forEach(btn=>{
+        btn.addEventListener('click', function(){
+          const d = this.dataset;
+          addItem({id:d.id, title:d.title, price:parseInt(d.price), img:d.img});
+          this.classList.add('btn-success');
+          this.textContent = '✓';
+          setTimeout(()=>{ this.classList.remove('btn-success'); this.textContent = '+'; }, 800);
+        });
+      });
+      // Navigate to product-detail with query params
+      document.querySelectorAll('.to-detail').forEach(a=>{
+        a.addEventListener('click', function(e){
+          e.preventDefault();
+          const d = this.dataset;
+          const qs = new URLSearchParams({id:d.id, title:d.title, price:d.price, img:d.img});
+          window.location.href = '/pages/product-detail?' + qs.toString();
+        });
+      });
+      updateBadge();
+    })();
+  </script>
+</body>
+</html>
