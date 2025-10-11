@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
 <body>
   <!-- Fragment: siteHeader -->
   <nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top" th:fragment="siteHeader">
@@ -16,20 +16,31 @@
           <li class="nav-item"><a id="navPromo" class="nav-link text-danger" th:href="@{/pages/product-list}">Khuyến mãi</a></li>
         </ul>
         <ul class="navbar-nav ms-auto" id="navRight">
-          <li class="nav-item dropdown me-2">
-            <a class="nav-link dropdown-toggle" href="#" id="adminMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">Admin</a>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminMenu">
-              <li><a class="dropdown-item" th:href="@{/pages/admin/category}">Loại hàng</a></li>
-              <li><a class="dropdown-item" th:href="@{/pages/admin/product}">Sản phẩm</a></li>
-              <li><a class="dropdown-item" th:href="@{/pages/admin/order}">Đơn hàng</a></li>
-              <li><a class="dropdown-item" th:href="@{/pages/admin/account}">Tài khoản</a></li>
+          <!-- Khi chưa đăng nhập -->
+          <li class="nav-item" sec:authorize="!isAuthenticated()"><a class="nav-link" th:href="@{/auth/login}">Đăng nhập</a></li>
+          <li class="nav-item" sec:authorize="!isAuthenticated()"><a class="nav-link" th:href="@{/account/sign-up}">Đăng ký</a></li>
+
+          <!-- Khi đã đăng nhập: menu tài khoản -->
+          <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+            <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" id="navUserDropdown">
+              <img th:src="${currentAccount != null and currentAccount.avatar != null ? currentAccount.avatar : '/images/user-default.svg'}" alt="avatar" width="24" height="24" class="rounded-circle">
+              <span sec:authentication="name">Tài khoản</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" th:href="@{/account/edit-profile}">Tài Khoản Của Tôi</a></li>
+              <li><a class="dropdown-item" th:href="@{/pages/order-list}">Đơn Mua</a></li>
+              <li sec:authorize="hasRole('ADMIN')"><hr class="dropdown-divider"></li>
+              <li sec:authorize="hasRole('ADMIN')"><a class="dropdown-item" th:href="@{/pages/admin/category}">Quản trị</a></li>
               <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" th:href="@{/pages/admin/revenue}">Doanh thu</a></li>
-              <li><a class="dropdown-item" th:href="@{/pages/admin/vip}">Khách VIP</a></li>
+              <li>
+                <form th:action="@{/auth/logout}" method="post" class="px-3">
+                  <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                  <button type="submit" class="dropdown-item px-0">Đăng Xuất</button>
+                </form>
+              </li>
             </ul>
           </li>
-          <li class="nav-item" data-auth="guest"><a class="nav-link" th:href="@{/pages/login}">Đăng nhập</a></li>
-          <li class="nav-item" data-auth="guest"><a class="nav-link" th:href="@{/pages/sign-up}">Đăng ký</a></li>
+
           <li class="nav-item position-relative">
             <a class="nav-link" th:href="@{/pages/cart}">Giỏ hàng
               <span id="cartCountBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" style="display:none">0</span>
@@ -40,59 +51,21 @@
     </div>
   </nav>
   <script>
+    // Chỉ giữ lại cập nhật badge giỏ hàng theo localStorage (phần còn lại do Spring Security xử lý)
     document.addEventListener('DOMContentLoaded', function(){
-      try{
-        const navRight = document.getElementById('navRight');
-        if(!navRight) return;
-        // Active state for promo when at product-list
-        const promo = document.getElementById('navPromo');
-        if(promo && location.pathname.includes('/pages/product-list')){
-          promo.classList.add('active');
-        }
-        // Update cart badge from localStorage cart
-        const badge = document.getElementById('cartCountBadge');
-        const updateBadge = () => {
-          try{
-            const cart = JSON.parse(localStorage.getItem('cart')||'[]');
-            const count = cart.reduce((s,i)=>s + (parseInt(i.qty||1)||1), 0);
-            if(badge){
-              if(count>0){ badge.style.display='inline-block'; badge.textContent = count; }
-              else{ badge.style.display='none'; }
-            }
-          }catch(e){ /* noop */ }
-        };
-        updateBadge();
-        window.addEventListener('storage', updateBadge);
-        const raw = localStorage.getItem('demoUser');
-        if(raw){
-          const u = JSON.parse(raw);
-          // remove guest links
-          navRight.querySelectorAll('[data-auth="guest"]').forEach(el=>el.remove());
-          // add welcome + logout if not already added
-          if(!document.getElementById('navUserDropdown')){
-            const li = document.createElement('li');
-            li.className = 'nav-item dropdown';
-            li.innerHTML = `
-              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" id="navUserDropdown">${u.name || 'Tài khoản'}</a>
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="/pages/edit-profile">Hồ sơ</a></li>
-                <li><a class="dropdown-item" href="/pages/order-list">Đơn hàng</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#" id="btnLogout">Đăng xuất</a></li>
-              </ul>`;
-            navRight.prepend(li);
+      const badge = document.getElementById('cartCountBadge');
+      const updateBadge = () => {
+        try{
+          const cart = JSON.parse(localStorage.getItem('cart')||'[]');
+          const count = cart.reduce((s,i)=>s + (parseInt(i.qty||1)||1), 0);
+          if(badge){
+            if(count>0){ badge.style.display='inline-block'; badge.textContent = count; }
+            else{ badge.style.display='none'; }
           }
-          const logout = document.getElementById('btnLogout');
-          if(logout){
-            logout.addEventListener('click', function(e){
-              e.preventDefault();
-              localStorage.removeItem('demoUser');
-              // also clear cart demo if needed: leave as-is to persist across sessions
-              location.href = '/pages/home';
-            });
-          }
-        }
-      }catch(e){console.warn(e)}
+        }catch(e){}
+      };
+      updateBadge();
+      window.addEventListener('storage', updateBadge);
     });
   </script>
 </body>
