@@ -9,10 +9,6 @@
     <div class="container">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h3 class="mb-0">Tài khoản</h3>
-        <div>
-          <button class="btn btn-outline-secondary me-2" id="btnSeed">Seed demo</button>
-          <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#modalAccount">Thêm tài khoản</button>
-        </div>
       </div>
 
       <div class="card">
@@ -78,61 +74,87 @@
   </div>
 
   <script>
-    const ACC_KEY = 'admin_accounts';
-    function loadAcc(){ try{ return JSON.parse(localStorage.getItem(ACC_KEY)||'[]'); }catch(e){ return []; } }
-    function saveAcc(list){ localStorage.setItem(ACC_KEY, JSON.stringify(list)); }
+    let editingId = null;
 
-    function renderAcc(){
-      const kw = (document.getElementById('kw').value||'').toLowerCase();
+    async function loadAcc(){
+      const kw = document.getElementById('kw').value||'';
       const rf = document.getElementById('roleFilter').value;
+      let url = '/admin/api/accounts?';
+      if(kw) url += `keyword=${encodeURIComponent(kw)}&`;
+      if(rf) url += `role=${rf}`;
+      const res = await fetch(url);
+      const list = await res.json();
+      renderAcc(list);
+    }
+
+    function renderAcc(list){
       const body = document.getElementById('accBody');
-      const list = loadAcc().filter(a=> (!rf || a.role===rf) && (a.email?.toLowerCase().includes(kw) || a.name?.toLowerCase().includes(kw)));
       body.innerHTML = '';
-      list.forEach((a,idx)=>{
+      list.forEach(a=>{
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${a.email}</td>
-          <td>${a.name||''}</td>
-          <td>${a.role||'user'}</td>
+          <td>${a.fullName||''}</td>
+          <td>${a.roleName||'USER'}</td>
           <td class="text-end">
-            <button class="btn btn-sm btn-outline-secondary me-1" data-action="edit" data-index="${idx}">Sửa</button>
-            <button class="btn btn-sm btn-outline-danger" data-action="del" data-index="${idx}">Xóa</button>
+            <button class="btn btn-sm btn-outline-secondary me-1" data-action="edit" data-id="${a.id}">Sửa</button>
+            <button class="btn btn-sm btn-outline-danger" data-action="del" data-id="${a.id}">Xóa</button>
           </td>`;
         body.appendChild(tr);
       });
-      body.querySelectorAll('[data-action]').forEach(btn=>{
-        btn.addEventListener('click', function(){
-          const idx = parseInt(this.dataset.index);
-          const list = loadAcc();
-          if(this.dataset.action==='edit'){
-            const a = list[idx]; aEmail.value=a.email; aName.value=a.name; aRole.value=a.role||'user';
-            new bootstrap.Modal(modalAccount).show();
-            btnSaveAcc.onclick=()=>{ a.email=aEmail.value.trim(); a.name=aName.value.trim(); a.role=aRole.value; saveAcc(list); renderAcc(); bootstrap.Modal.getInstance(modalAccount).hide(); };
-          }
-          if(this.dataset.action==='del'){
-            if(confirm('Xóa tài khoản này?')){ list.splice(idx,1); saveAcc(list); renderAcc(); }
-          }
+      
+      body.querySelectorAll('[data-action="edit"]').forEach(btn=>{
+        btn.addEventListener('click', async function(){
+          const id = parseInt(this.dataset.id);
+          const res = await fetch(`/admin/api/accounts/${id}`);
+          const a = await res.json();
+          editingId = id;
+          aEmail.value=a.email; aName.value=a.fullName; aRole.value=(a.roleName||'USER').toLowerCase();
+          new bootstrap.Modal(modalAccount).show();
+        });
+      });
+
+      body.querySelectorAll('[data-action="del"]').forEach(btn=>{
+        btn.addEventListener('click', async function(){
+          if(!confirm('Xóa tài khoản này?')) return;
+          const id = parseInt(this.dataset.id);
+          await fetch(`/admin/api/accounts/${id}`, {method: 'DELETE'});
+          loadAcc();
         });
       });
     }
 
     document.addEventListener('DOMContentLoaded', function(){
-      roleFilter.addEventListener('change', renderAcc);
-      kw.addEventListener('input', renderAcc);
-      btnSaveAcc.addEventListener('click', function(){
-        const list = loadAcc();
-        list.push({email:aEmail.value.trim(), name:aName.value.trim(), role:aRole.value});
-        saveAcc(list); renderAcc(); bootstrap.Modal.getInstance(modalAccount).hide();
+      roleFilter.addEventListener('change', loadAcc);
+      kw.addEventListener('input', loadAcc);
+      
+      document.getElementById('btnSaveAcc').addEventListener('click', async function(){
+        if(!editingId) return;
+        
+        const data = {
+          email: aEmail.value.trim(),
+          fullName: aName.value.trim(),
+          roleName: aRole.value.toUpperCase()
+        };
+        
+        await fetch(`/admin/api/accounts/${editingId}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(data)
+        });
+        
+        bootstrap.Modal.getInstance(modalAccount).hide();
+        aEmail.value=aName.value=''; aRole.value='user';
+        editingId = null;
+        loadAcc();
+      });
+
+      document.getElementById('modalAccount').addEventListener('hidden.bs.modal', function(){
+        editingId = null;
         aEmail.value=aName.value=''; aRole.value='user';
       });
-      btnSeed.addEventListener('click', function(){
-        if(!confirm('Seed demo tài khoản?')) return;
-        saveAcc([
-          {email:'demo@shop.omg', name:'Demo User', role:'user'},
-          {email:'admin@shop.omg', name:'Quản trị', role:'admin'}
-        ]); renderAcc();
-      });
-      renderAcc();
+      
+      loadAcc();
     });
   </script>
   </article>
