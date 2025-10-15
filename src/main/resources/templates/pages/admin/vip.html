@@ -28,23 +28,19 @@
       </div>
     </div>
   <script>
-    const ORDER_KEY = 'admin_orders';
-    function loadOrders(){ try{ return JSON.parse(localStorage.getItem(ORDER_KEY)||'[]'); }catch(e){ return []; } }
     function money(n){ try{ return new Intl.NumberFormat('vi-VN').format(n)+' đ'; }catch(e){ return n; } }
 
-    function calcVIP(){
-      const thr = parseInt(threshold.value||'0');
-      const map = new Map();
-      loadOrders().filter(o=> o.status==='completed').forEach(o=>{
-        const key = o.customer||'Khách lẻ';
-        map.set(key, (map.get(key)||0) + (o.total||0));
-      });
-      const rows = Array.from(map.entries()).filter(([k,v])=> v>=thr).sort((a,b)=> b[1]-a[1]);
-      vipBody.innerHTML = rows.map(([k,v])=> `<tr><td>${k}</td><td class="text-end">${money(v)}</td></tr>`).join('');
+    async function calcVIP(){
+      const thr = parseInt(threshold.value||'1000000');
+      const res = await fetch(`/admin/api/vip-customers?threshold=${thr}`);
+      const list = await res.json();
+      vipBody.innerHTML = list.map(c=> `<tr><td>${c.customerName}</td><td class="text-end">${money(c.totalSpent||0)}</td></tr>`).join('');
     }
 
     document.addEventListener('DOMContentLoaded', function(){
       btnCalc.addEventListener('click', calcVIP);
+      threshold.value = '1000000';
+      calcVIP();
     });
   </script>
   </article>
