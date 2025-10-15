@@ -54,7 +54,7 @@
               <span class="badge bg-danger position-absolute top-0 start-0 m-2"
                     th:if="${item.discount != null and item.discount.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
                     th:text="${'-' + #numbers.formatDecimal(item.discount, 0, 0) + '%'}">-20%</span>
-              <a th:href="@{'/pages/product-detail'(id=${item.id})}">
+              <a th:href="@{'/product/detail/' + ${item.id}}">
                 <img class="card-img-top" alt="product" loading="lazy"
                      th:src="${#strings.isEmpty(item.image) ? '/images/placeholder.svg' : item.image}"
                      onerror="this.onerror=null;this.src='/images/placeholder.svg';">
@@ -68,7 +68,7 @@
                       th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</span>
               </div>
               <h6 class="card-title mb-0">
-                <a class="stretched-link text-reset" th:href="@{'/pages/product-detail'(id=${item.id})}" th:text="${item.name}">Tên sản phẩm</a>
+                <a class="stretched-link text-reset" th:href="@{'/product/detail/' + ${item.id}}" th:text="${item.name}">Tên sản phẩm</a>
               </h6>
             </div>
           </div>

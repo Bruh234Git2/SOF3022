@@ -10,7 +10,7 @@
       <nav aria-label="breadcrumb" class="mb-3">
         <ol class="breadcrumb mb-1">
           <li class="breadcrumb-item"><a th:href="@{/pages/home}">Trang chủ</a></li>
-          <li class="breadcrumb-item"><a th:href="@{/pages/product-list}">Sản phẩm</a></li>
+          <li class="breadcrumb-item"><a th:href="@{/products}">Sản phẩm</a></li>
           <li class="breadcrumb-item active" aria-current="page">Chi tiết</li>
         </ol>
       </nav>
@@ -18,27 +18,108 @@
       <div class="row g-4">
         <!-- gallery -->
         <div class="col-lg-6">
-          <div class="card mb-3">
-            <img id="mainImage" class="card-img-top" src="https://media.routine.vn/1200x1500/prod/variant/10f25shs008-green-1-jpg-7wdk.webp" alt="product">
+          <style>
+            /* gallery sizing - 1:1 like Shopee */
+            .pd-aspect{ aspect-ratio: 1/1; width: 100%; border-radius: 8px; overflow: hidden; background: #f7f7f7; }
+            .pd-main{ width:100%; height:100%; object-fit: cover; cursor: zoom-in; }
+            .pd-thumb{ width: 96px; height: 96px; object-fit: cover; cursor: pointer; border-radius: 6px; }
+            .pd-thumb.active{ outline: 2px solid #000; }
+            .pd-modal-img{ width: 420px; height: 420px; object-fit: cover; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.10); background: #f7f7f7; }
+            .pd-modal-wrap{ background:#fff; border-radius:18px; padding:40px 32px; box-shadow: 0 8px 32px rgba(0,0,0,.18); border: 2px solid #e5e7eb; max-width: 900px; margin: auto; }
+            .pd-modal-thumbs{ display:flex; flex-direction:column; gap:16px; max-height: 420px; overflow-y:auto; margin-top:8px; }
+            .pd-modal-thumb{ width:90px; height:90px; object-fit:cover; cursor:pointer; border-radius:10px; border: 2px solid transparent; transition: border 0.2s; background: #f7f7f7; }
+            .pd-modal-thumb.active{ border-color:#ff5722; }
+            .pd-nav-btn{ position: absolute; top: 50%; transform: translateY(-50%); border-radius: 50%; font-size: 2rem; width: 44px; height: 44px; z-index: 2; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.10); border: none; }
+            @media (min-width: 1400px){ .pd-thumb{ width:104px; height:104px; } }
+            @media (max-width: 991px) {
+                .pd-modal-img { width: 260px; height: 260px; }
+                .pd-modal-thumbs { max-height: 260px; }
+                .pd-modal-wrap { padding: 16px 8px; max-width: 98vw; }
+            }
+            /* custom overlay fallback */
+            .pd-overlay{ position: fixed; inset:0; background: rgba(0,0,0,.75); display:none; align-items:center; justify-content:center; z-index: 1055; }
+            .pd-overlay.show{ display:flex; }
+            .pd-overlay .nav{ position:absolute; top:50%; transform: translateY(-50%); font-size: 1.6rem; color:#111; background:#fff; border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center; cursor:pointer; user-select:none; box-shadow: 0 4px 20px rgba(0,0,0,.2); }
+            .pd-overlay .prev{ left:16px; }
+            .pd-overlay .next{ right:16px; }
+            .pd-overlay .close{ position:absolute; top:12px; right:12px; font-size: 1.5rem; background:#fff; border-radius: 6px; padding:4px 10px; cursor:pointer; }
+          </style>
+          <div class="card mb-3 border-0">
+            <div class="pd-aspect">
+              <img id="mainImage" class="pd-main" alt="Ảnh sản phẩm" th:src="${#strings.isEmpty(product.image) ? '/images/placeholder.svg' : product.image}"
+                   onerror="this.onerror=null;this.src='/images/placeholder.svg';" th:data-id="${product.id}" th:data-title="${product.name}"
+                   th:data-price="${product.salePrice}" th:data-img="${#strings.isEmpty(product.image) ? '/images/placeholder.svg' : product.image}"
+                   width="800" height="800" fetchpriority="high" decoding="async" onclick="pdOpenLightbox()">
+            </div>
           </div>
-          <div class="d-flex gap-2">
-            <img src="https://media.routine.vn/400x0/prod/variant/10f25shs008-green-1-jpg-7wdk.webp" class="rounded border" style="width:80px; height:80px; object-fit:cover; cursor:pointer" onclick="swapImg(this)">
-            <img src="https://product.hstatic.net/1000008082/product/s1_9c03fadfc6ff42fcbdedf9818ea1916c_master.jpeg" class="rounded border" style="width:80px; height:80px; object-fit:cover; cursor:pointer" onclick="swapImg(this)">
-            <img src="https://lados.vn/wp-content/uploads/2024/10/kieu-ao-so-mi-ke-soc-nam-jpg.webp" class="rounded border" style="width:80px; height:80px; object-fit:cover; cursor:pointer" onclick="swapImg(this)">
+          <div id="thumbRow" class="d-flex gap-2">
+            <!-- Always include main image as the first thumbnail -->
+            <img th:src="${#strings.isEmpty(product.image) ? '/images/placeholder.svg' : product.image}"
+                 class="pd-thumb rounded border active"
+                 onerror="this.onerror=null;this.src='/images/placeholder.svg';"
+                 loading="lazy" decoding="async" width="200" height="200"
+                 onmouseenter="pdPreview(this)" onclick="pdOpenLightbox(this)">
+            <!-- Then the rest images -->
+            <img th:if="${!#lists.isEmpty(images)}" th:each="img : ${images}" th:src="${img.imageUrl}"
+                 class="pd-thumb rounded border"
+                 onerror="this.onerror=null;this.src='/images/placeholder.svg';"
+                 loading="lazy" decoding="async" width="200" height="200"
+                 onmouseenter="pdPreview(this)" onclick="pdOpenLightbox(this)">
+          </div>
+
+          <!-- Lightbox modal -->
+          <div class="modal fade" id="imgLightbox" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" style="max-width:900px;">
+              <div class="modal-content bg-transparent border-0">
+                <div class="modal-body pd-modal-wrap">
+                  <div class="d-flex flex-row align-items-start gap-4">
+                    <div class="position-relative d-flex align-items-center justify-content-center" style="min-width:420px;">
+                      <button type="button" id="btnPrev" class="btn btn-light pd-nav-btn" style="left:-32px;">‹</button>
+                      <img id="lightboxImg" class="pd-modal-img" alt="">
+                      <button type="button" id="btnNext" class="btn btn-light pd-nav-btn" style="right:-32px;">›</button>
+                    </div>
+                    <div style="min-width:120px; max-width:220px;">
+                      <div class="mb-2 fw-semibold" th:text="${product.name}">Tên sản phẩm</div>
+                      <div id="lbThumbs" class="pd-modal-thumbs"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Fallback overlay if Bootstrap JS not loaded -->
+          <div id="pdOverlay" class="pd-overlay">
+            <div class="pd-modal-wrap" style="position:relative;">
+              <span class="nav prev" id="ovPrev">‹</span>
+              <div class="d-flex flex-row align-items-start gap-4">
+                <div class="d-flex align-items-center justify-content-center" style="min-width:420px;">
+                  <img id="ovImg" class="pd-modal-img" alt="">
+                </div>
+                <div style="min-width:120px; max-width:220px;">
+                  <div class="mb-2 fw-semibold" th:text="${product.name}">Tên sản phẩm</div>
+                  <div id="ovThumbs" class="pd-modal-thumbs"></div>
+                </div>
+              </div>
+              <span class="nav next" id="ovNext">›</span>
+            </div>
           </div>
         </div>
 
         <!-- info -->
         <div class="col-lg-6">
-          <h2 class="fw-bold">Áo Sơ Mi Nam Smart Shirt</h2>
+          <h2 class="fw-bold" th:text="${product.name}">Tên sản phẩm</h2>
           <div class="d-flex align-items-center gap-2 mb-2">
-            <div class="text-warning">★★★★★</div>
-            <small class="text-muted">(128 đánh giá)</small>
+            <div class="text-warning" th:text="${#numbers.formatDecimal(avgRating,1,1)} + '★'"></div>
+            <small class="text-muted" th:text="'(' + ${reviewCount} + ' đánh giá)'">(0 đánh giá)</small>
           </div>
           <div class="mb-3">
-            <span class="fs-4 fw-bold">349.000 đ</span>
-            <span class="text-muted text-decoration-line-through ms-2">441.000 đ</span>
-            <span class="badge bg-danger ms-2">-20%</span>
+            <span class="fs-4 fw-bold" th:text="${#numbers.formatDecimal(product.salePrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</span>
+            <span class="text-muted text-decoration-line-through ms-2"
+                  th:if="${product.discount != null and product.discount > 0}"
+                  th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</span>
+            <span class="badge bg-danger ms-2"
+                  th:if="${product.discount != null and product.discount > 0}"
+                  th:text="${'-' + #numbers.formatDecimal(product.discount,0,0) + '%'}">-0%</span>
           </div>
 
           <div class="mb-3">
@@ -71,7 +152,7 @@
 
           <div class="border-top pt-3">
             <h6>Mô tả</h6>
-            <p class="text-muted mb-0">Chất liệu cotton thoáng mát, form slim vừa vặn, phù hợp đi làm và đi chơi. Hướng dẫn giặt: giặt máy chế độ nhẹ, không dùng chất tẩy mạnh.</p>
+            <p class="text-muted mb-0" th:text="${#strings.isEmpty(product.description) ? 'Chưa có mô tả.' : product.description}">Mô tả</p>
           </div>
         </div>
       </div>
@@ -79,26 +160,40 @@
       <!-- đánh giá đơn giản -->
       <div class="mt-5">
         <h4 class="mb-3">Đánh giá</h4>
-        <div class="border rounded p-3 mb-2">
+        <div class="border rounded p-3 mb-2" th:each="rv : ${reviews}">
           <div class="d-flex justify-content-between">
-            <strong>Minh Anh</strong>
-            <span class="text-warning">★★★★★</span>
+            <strong th:text="${rv.account != null ? rv.account.fullName : 'Khách hàng'}">Khách hàng</strong>
+            <span class="text-warning" th:text="${#numbers.formatDecimal(rv.rating,0,0)} + '★'"></span>
           </div>
-          <p class="mb-0 text-muted">Áo đẹp, chất vải mát, giao nhanh.</p>
+          <p class="mb-0 text-muted" th:text="${rv.comment}">Bình luận</p>
         </div>
-        <div class="border rounded p-3 mb-2">
-          <div class="d-flex justify-content-between">
-            <strong>Quang Huy</strong>
-            <span class="text-warning">★★★★☆</span>
-          </div>
-          <p class="mb-0 text-muted">Form hơi ôm, nên tăng 1 size.</p>
-        </div>
+        <div class="text-muted" th:if="${#lists.isEmpty(reviews)}">Chưa có đánh giá.</div>
       </div>
     </div>
   <script>
-    function swapImg(el){
+    function swapImg(el){ // legacy
       const main = document.getElementById('mainImage');
       const tmp = main.src; main.src = el.src; el.src = tmp;
+    }
+    // Helpers to ensure hover/click works even if listeners fail
+    function pdThumbs(){ return Array.from(document.querySelectorAll('#thumbRow .pd-thumb')); }
+    function pdSetActive(i){
+      const arr = pdThumbs();
+      arr.forEach(x=>x.classList.remove('active'));
+      if(arr[i]) arr[i].classList.add('active');
+    }
+    function pdPreview(el){
+      const main = document.getElementById('mainImage');
+      main.src = el.src;
+      const idx = pdThumbs().indexOf(el);
+      if(idx>=0){ window.__pdIndex = idx; pdSetActive(idx); }
+    }
+    function pdOpenLightbox(el){
+      const arr = pdThumbs();
+      let idx = (typeof window.__pdIndex==='number') ? window.__pdIndex : 0;
+      if(el){ const j = arr.indexOf(el); if(j>=0) idx = j; }
+      if(!arr.length){ idx = 0; }
+      if(typeof window.__openLightbox==='function'){ window.__openLightbox(idx); }
     }
     function chgQty(delta){
       const i = document.getElementById('qty');
@@ -121,29 +216,166 @@
       }catch(e){ console.warn(e); }
     }
     document.addEventListener('DOMContentLoaded', function(){
-      // Read product from query string if present
-      const qs = new URLSearchParams(window.location.search);
-      const qId = qs.get('id');
-      const qTitle = qs.get('title');
-      const qPrice = qs.get('price');
-      const qImg = qs.get('img');
+      // Build product data from data-* of main image
+      const mainImg = document.getElementById('mainImage');
       let product = {
-        id: qId || 'detail-001',
-        title: qTitle || 'Áo Sơ Mi Nam Smart Shirt',
-        price: qPrice ? parseInt(qPrice) : 349000,
-        img: qImg || document.getElementById('mainImage')?.src || ''
+        id: mainImg?.dataset?.id,
+        title: mainImg?.dataset?.title,
+        price: parseInt(mainImg?.dataset?.price || '0') || 0,
+        img: mainImg?.dataset?.img || mainImg?.src || ''
       };
-      // hydrate UI according to query
-      try{
-        const h2 = document.querySelector('h2.fw-bold');
-        if(h2 && qTitle) h2.textContent = qTitle;
-        // Update main image
-        const mainImg = document.getElementById('mainImage');
-        if(mainImg && qImg) mainImg.src = qImg;
-        // Update price display
-        const priceSpan = document.querySelector('.fw-bold.fs-4, .fs-4.fw-bold');
-        if(priceSpan && product.price){ priceSpan.textContent = new Intl.NumberFormat('vi-VN').format(product.price) + ' đ'; }
-      }catch(e){ console.warn(e); }
+
+      // ===== Helpers: resize CDN images (Pexels/Unsplash) =====
+      function cdnResize(url, size){
+        try{
+          if(!url) return url;
+          const u = new URL(url, window.location.origin);
+          const w = size, h = size;
+          // images.pexels.com
+          if(u.hostname.includes('images.pexels.com')){
+            const qs = u.search ? u.search + '&' : '?';
+            return u.origin + u.pathname + qs + `auto=compress&cs=tinysrgb&w=${w}&h=${h}&fit=crop`;
+          }
+          // images.unsplash.com
+          if(u.hostname.includes('images.unsplash.com')){
+            const qs = u.search ? u.search + '&' : '?';
+            return u.origin + u.pathname + qs + `w=${w}&h=${h}&fit=crop&q=75`;
+          }
+          // source.unsplash.com - supports pattern /{w}x{h}/
+          if(u.hostname.includes('source.unsplash.com')){
+            return url.replace(/\/(\d+|auto)x(\d+|auto)\//, `/${w}x${h}/`);
+          }
+          return url;
+        }catch{ return url; }
+      }
+      // Cache RAW sources to tránh chồng tham số khi resize
+      const pageThumbEls = Array.from(document.querySelectorAll('#thumbRow .pd-thumb'));
+      const rawMainSrc = mainImg?.getAttribute('src') || '';
+      const rawThumbSrcs = pageThumbEls.map(im => im.getAttribute('src'));
+
+      // Safe setter: chỉ đổi khi load OK, nếu lỗi thì fallback placeholder
+      const PLACEHOLDER = '/images/placeholder.svg';
+      function safeSetSrc(imgEl, url){
+        if(!imgEl) return;
+        const tmp = new Image();
+        tmp.onload = ()=>{ imgEl.src = url; };
+        tmp.onerror = ()=>{ imgEl.src = PLACEHOLDER; };
+        tmp.src = url;
+      }
+
+      // apply resize to main and page thumbs from RAW
+      if(mainImg && rawMainSrc) safeSetSrc(mainImg, cdnResize(rawMainSrc, 800));
+      pageThumbEls.forEach((im,idx)=>{ safeSetSrc(im, cdnResize(rawThumbSrcs[idx], 200)); });
+
+      // ===== Gallery interactions =====
+      const thumbs = Array.from(document.querySelectorAll('#thumbRow .pd-thumb'));
+      let currentIndex = 0;
+      // init active thumb
+      thumbs.forEach((t,i)=>{ if(t.classList.contains('active')) currentIndex=i; });
+      window.__pdIndex = currentIndex;
+
+      // hover: preview
+      thumbs.forEach((t,i)=>{
+        t.addEventListener('mouseenter', ()=>{
+          document.querySelectorAll('#thumbRow .pd-thumb').forEach(x=>x.classList.remove('active'));
+          t.classList.add('active');
+          const raw = rawThumbSrcs[i] || t.getAttribute('src');
+          safeSetSrc(mainImg, cdnResize(raw, 800));
+          currentIndex = i;
+          window.__pdIndex = currentIndex;
+        });
+        // click: open lightbox
+        t.addEventListener('click', ()=> openLightbox(i));
+      });
+
+      // click on main image opens lightbox
+      if(mainImg){ mainImg.addEventListener('click', ()=> openLightbox(currentIndex)); }
+
+      // Lightbox functions (Bootstrap or custom overlay fallback)
+      const lb = document.getElementById('imgLightbox');
+      const lbImg = document.getElementById('lightboxImg');
+      const btnPrev = document.getElementById('btnPrev');
+      const btnNext = document.getElementById('btnNext');
+      const hasBootstrap = !!(window.bootstrap && bootstrap.Modal);
+      // overlay fallback refs
+      const ov = document.getElementById('pdOverlay');
+      const ovImg = document.getElementById('ovImg');
+      const ovPrev = document.getElementById('ovPrev');
+      const ovNext = document.getElementById('ovNext');
+      const ovClose = document.getElementById('ovClose');
+      const lbThumbsBox = document.getElementById('lbThumbs');
+      const ovThumbsBox = document.getElementById('ovThumbs');
+
+      // Build thumbs in modal/overlay once
+      function buildThumbGrid(container){
+        if(!container) return;
+        container.innerHTML = '';
+        const arrRaw = rawThumbSrcs.length? rawThumbSrcs : [rawMainSrc];
+        arrRaw.forEach((raw,i)=>{
+          const im = document.createElement('img');
+          im.src = cdnResize(raw, 200); im.loading = 'lazy'; im.decoding='async';
+          im.width=160; im.height=160; im.className='pd-modal-thumb'+(i===currentIndex?' active':'');
+          im.addEventListener('click', ()=>{ showAt(i); syncThumbGrids(); });
+          container.appendChild(im);
+        });
+      }
+      function syncThumbGrids(){
+        [lbThumbsBox, ovThumbsBox].forEach(box=>{
+          if(!box) return; const nodes = box.querySelectorAll('.pd-modal-thumb');
+          nodes.forEach((n,idx)=>{ n.classList.toggle('active', idx===currentIndex); });
+        });
+      }
+      buildThumbGrid(lbThumbsBox); buildThumbGrid(ovThumbsBox);
+
+      // Preload neighbor images to make navigation faster
+      function preloadNeighbors(){
+        const srcs = (rawThumbSrcs.length? rawThumbSrcs : [rawMainSrc]).map(s=> cdnResize(s, 800));
+        if(!srcs.length) return;
+        const prev = srcs[(currentIndex-1+srcs.length)%srcs.length];
+        const next = srcs[(currentIndex+1)%srcs.length];
+        [prev,next].forEach(s=>{ const img = new Image(); img.src = s; });
+      }
+      function showAt(i){
+        const raws = rawThumbSrcs.length? rawThumbSrcs : [rawMainSrc];
+        const raw = raws[(i+raws.length)%raws.length] || rawMainSrc;
+        const src = cdnResize(raw, 800);
+        currentIndex = (i+thumbs.length)%thumbs.length;
+        if(hasBootstrap){ safeSetSrc(lbImg, src); } else { safeSetSrc(ovImg, src); }
+        syncThumbGrids();
+        preloadNeighbors();
+      }
+      function openLightbox(i){
+        showAt(i);
+        if(hasBootstrap){
+          const modal = bootstrap.Modal.getOrCreateInstance(lb);
+          modal.show();
+        } else {
+          ov.classList.add('show');
+        }
+      }
+      // expose for inline handler
+      window.__openLightbox = openLightbox;
+      // nav buttons
+      if(btnPrev) btnPrev.addEventListener('click', ()=> showAt(currentIndex-1));
+      if(btnNext) btnNext.addEventListener('click', ()=> showAt(currentIndex+1));
+      if(ovPrev) ovPrev.addEventListener('click', ()=> showAt(currentIndex-1));
+      if(ovNext) ovNext.addEventListener('click', ()=> showAt(currentIndex+1));
+      if(ovClose) ovClose.addEventListener('click', ()=> ov.classList.remove('show'));
+      // close when click outside image
+      if(ov) ov.addEventListener('click', (e)=>{ if(e.target===ov) ov.classList.remove('show'); });
+      // ESC / Arrow keys
+      document.addEventListener('keydown', (e)=>{
+        const isOpen = (hasBootstrap && document.body.classList.contains('modal-open')) || (ov && ov.classList.contains('show'));
+        if(!isOpen) return;
+        if(e.key==='Escape'){
+          if(hasBootstrap){ try{ bootstrap.Modal.getInstance(lb)?.hide(); }catch{} } else { ov.classList.remove('show'); }
+        } else if(e.key==='ArrowLeft'){
+          showAt(currentIndex-1);
+        } else if(e.key==='ArrowRight'){
+          showAt(currentIndex+1);
+        }
+      });
+
       // chọn màu/size có trạng thái active
       function bindToggle(groupId, activeClass){
         const g = document.getElementById(groupId);
@@ -165,8 +397,8 @@
           // lấy dữ liệu đã parse từ query hoặc UI
           const title = product.title || (document.querySelector('h2.fw-bold')?.textContent?.trim() || 'Sản phẩm');
           const img = product.img || (document.getElementById('mainImage')?.src || '');
-          const price = product.price || 349000;
-          const id = product.id || 'detail-001';
+          const price = product.price || 0;
+          const id = product.id || '0';
           const color = document.querySelector('#colorGroup .active')?.dataset?.value || 'Default';
           const size = document.querySelector('#sizeGroup .active')?.dataset?.value || 'M';
           addToCart({id, title, price, img, qty, color, size});
