@@ -17,29 +17,26 @@
         <a th:href="@{/pages/order-list}" class="text-decoration-none">Xem đơn hàng →</a>
       </div>
 
-      <div class="row g-3">
-        <div class="col-6 col-md-4 col-lg-3">
+      <div th:if="${#lists.isEmpty(purchasedItems)}" class="text-center text-muted py-5">
+        Chưa có sản phẩm nào được mua hoàn thành.
+      </div>
+
+      <div class="row g-3" th:if="${!#lists.isEmpty(purchasedItems)}">
+        <div class="col-6 col-md-4 col-lg-3" th:each="it : ${purchasedItems}">
           <div class="card h-100">
-            <a th:href="@{/pages/product-detail}"><img class="card-img-top" src="https://media.routine.vn/1200x1500/prod/variant/10f25shs008-green-1-jpg-7wdk.webp" alt="shirt"></a>
+            <a th:href="@{'/product/detail/' + ${it.product.id}}">
+              <img class="card-img-top" th:src="${it.product.image}" th:alt="${it.product.name}">
+            </a>
             <div class="card-body">
               <div class="d-flex align-items-center gap-2 mb-1">
-                <strong>349.000 đ</strong>
-                <span class="text-muted text-decoration-line-through small">441.000 đ</span>
+                <strong th:text="${#numbers.formatDecimal(it.product.price, 0, 'POINT', 0, 'COMMA')} + ' đ'"></strong>
+                <span class="text-muted text-decoration-line-through small" th:if="${it.product.discount != null and it.product.discount > 0}"
+                      th:text="${#numbers.formatDecimal(it.product.price * (1 - it.product.discount/100), 0, 'POINT', 0, 'COMMA')} + ' đ'"></span>
               </div>
-              <h6 class="card-title mb-2"><a th:href="@{/pages/product-detail}" class="stretched-link text-reset">Smart Shirt - Xanh, M</a></h6>
-              <div class="text-muted small">Đã mua: 1</div>
-            </div>
-          </div>
-        </div>
-        <div class="col-6 col-md-4 col-lg-3">
-          <div class="card h-100">
-            <a th:href="@{/pages/product-detail}"><img class="card-img-top" src="https://down-vn.img.susercontent.com/file/vn-11134208-7ras8-mdk2na812mnjaa" alt="polo"></a>
-            <div class="card-body">
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <strong>299.000 đ</strong>
-              </div>
-              <h6 class="card-title mb-2"><a th:href="@{/pages/product-detail}" class="stretched-link text-reset">Polo Pique - Trắng, L</a></h6>
-              <div class="text-muted small">Đã mua: 2</div>
+              <h6 class="card-title mb-2">
+                <a class="stretched-link text-reset" th:href="@{'/product/detail/' + ${it.product.id}}" th:text="${it.product.name}"></a>
+              </h6>
+              <div class="text-muted small">Đã mua: <span th:text="${it.totalQty}"></span></div>
             </div>
           </div>
         </div>
