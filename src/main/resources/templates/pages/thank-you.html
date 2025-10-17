@@ -3,20 +3,32 @@
       th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
 <head>
   <title>Đặt hàng thành công</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 </head>
 <body>
   <article>
-    <div class="container" style="max-width: 720px;">
-      <div class="text-center">
-        <div class="display-6 mb-3">Cảm ơn bạn!</div>
-        <p class="text-muted">Đơn hàng của bạn đã được ghi nhận (demo). Chúng tôi sẽ liên hệ xác nhận trong thời gian sớm nhất.</p>
+    <div class="container" style="max-width: 720px; margin-top: 80px; margin-bottom: 80px;">
+      <div class="card shadow-lg border-0 text-center p-5">
+        <div class="mb-4">
+          <i class="bi bi-check-circle text-success" style="font-size: 70px;"></i>
+        </div>
+        <h2 class="fw-bold mb-3">Đặt hàng thành công!</h2>
+        <p class="text-muted mb-4">
+          Cảm ơn bạn đã mua hàng tại <strong>Shop OMG!</strong><br>
+          Đơn hàng của bạn đã được ghi nhận. Chúng tôi sẽ liên hệ xác nhận trong thời gian sớm nhất.
+        </p>
+
+        <div class="d-flex justify-content-center gap-3">
+          <a class="btn btn-dark px-4 py-2" th:href="@{/pages/home}">Tiếp tục mua sắm</a>
+          <a class="btn btn-outline-dark px-4 py-2" th:href="@{/pages/order-list}">Xem đơn hàng</a>
+        </div>
       </div>
 
-      <div class="card mt-4">
-        <div class="card-body text-center">
-          <a class="btn btn-dark me-2" th:href="@{/pages/home}">Tiếp tục mua sắm</a>
-          <a class="btn btn-outline-dark" th:href="@{/pages/order-list}">Xem đơn hàng</a>
-        </div>
+      <div class="text-center mt-5 text-muted small">
+        © 2025 Shop OMG! · 
+        <a href="#" class="text-decoration-none text-muted">Về chúng tôi</a> · 
+        <a href="#" class="text-decoration-none text-muted">Liên hệ</a> · 
+        <a href="#" class="text-decoration-none text-muted">Chính sách</a>
       </div>
     </div>
   </article>
