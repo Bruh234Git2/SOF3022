@@ -51,6 +51,18 @@ public class ProductService {
             if("1".equals(onSale)){
                 ps.add(cb.greaterThan(root.get("discount"), BigDecimal.ZERO));
             }
+            // gender filter using column Products.gender (Nam | Nữ | Unisex)
+            String gender = trim(params.get("gender"));
+            if(gender != null){
+                String low = gender.toLowerCase();
+                String canon = null;
+                if("male".equals(low) || "nam".equals(low)) canon = "Nam";
+                else if("female".equals(low) || "nu".equals(low) || "nữ".equals(low)) canon = "Nữ";
+                else if("unisex".equals(low)) canon = "Unisex";
+                if(canon != null){
+                    ps.add(cb.equal(root.get("gender"), canon));
+                }
+            }
             return cb.and(ps.toArray(new Predicate[0]));
         };
         return productRepository.findAll(spec, pageable);

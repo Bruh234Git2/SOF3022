@@ -1,15 +1,26 @@
 package poly.edu.controller;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import poly.edu.repository.CategoryRepository;
+import poly.edu.repository.ProductRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Controller
 @RequestMapping("/pages")
+@RequiredArgsConstructor
 public class PageController {
+    private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
 
     @GetMapping({"/home", "/"})
-    public String home() {
+    public String home(Model model) {
+        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("featured", productRepository.findTopRated(PageRequest.of(0, 8)));
         return "pages/home";
     }
 
