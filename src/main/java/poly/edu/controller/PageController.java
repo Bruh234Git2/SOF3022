@@ -15,7 +15,7 @@ public class PageController {
 
     @GetMapping("/product-list")
     public String productList() {
-        return "pages/product-list";
+        return "redirect:/products";
     }
  
     @GetMapping("/product-detail")
