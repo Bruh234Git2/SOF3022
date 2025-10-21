@@ -32,36 +32,23 @@
                       <th class="text-end">Thành tiền</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    <tr>
-                      <td>
-                        <div class="d-flex align-items-center gap-3">
-                          <img src="https://media.routine.vn/400x0/prod/variant/10f25shs008-green-1-jpg-7wdk.webp" width="60" height="60" class="rounded" style="object-fit:cover" alt="shirt">
-                          <div>
-                            <div class="fw-semibold">Smart Shirt - Xanh, M</div>
-                            <div class="text-muted small">SKU: SHS008</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td class="text-center">1</td>
-                      <td class="text-end">349.000 đ</td>
-                      <td class="text-end">349.000 đ</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <div class="d-flex align-items-center gap-3">
-                          <img src="https://down-vn.img.susercontent.com/file/vn-11134208-7ras8-mdk2na812mnjaa" width="60" height="60" class="rounded" style="object-fit:cover" alt="polo">
-                          <div>
-                            <div class="fw-semibold">Polo Pique - Trắng, L</div>
-                            <div class="text-muted small">SKU: POLO001</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td class="text-center">2</td>
-                      <td class="text-end">299.000 đ</td>
-                      <td class="text-end">598.000 đ</td>
-                    </tr>
-                  </tbody>
+                 <tbody>
+  <tr th:each="detail : ${details}">
+    <td>
+      <div class="d-flex align-items-center gap-3">
+        <img th:src="${detail.product.image}" width="60" height="60" class="rounded" style="object-fit:cover">
+        <div>
+          <div class="fw-semibold" th:text="${detail.product.name}">Tên sản phẩm</div>
+          <div class="text-muted small" th:text="'SKU: ' + ${detail.product.sku}">SKU</div>
+        </div>
+      </div>
+    </td>
+    <td class="text-center" th:text="${detail.quantity}">1</td>
+    <td class="text-end" th:text="${#numbers.formatDecimal(detail.price, 0, 'POINT', 0, 'POINT')} + ' đ'">349.000 đ</td>
+    <td class="text-end" th:text="${#numbers.formatDecimal(detail.price * detail.quantity, 0, 'POINT', 0, 'POINT')} + ' đ'">349.000 đ</td>
+  </tr>
+</tbody>
+
                 </table>
               </div>
             </div>

@@ -34,6 +34,9 @@ public class Product {
     @JoinColumn(name = "category_id")
     private Category category;
 
+    @Column(name = "gender", length = 10)
+    private String gender; // Nam | Nữ | Unisex
+
     @Transient
     public BigDecimal getSalePrice(){
         if(discount == null) return price;

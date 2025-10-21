@@ -9,10 +9,7 @@
     <div class="container">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h3 class="mb-0">Sản phẩm</h3>
-        <div>
-          <button class="btn btn-outline-secondary me-2" id="btnSeed">Seed demo</button>
-          <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#modalProduct">Thêm sản phẩm</button>
-        </div>
+        <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#modalProduct">Thêm sản phẩm</button>
       </div>
 
       <div class="card">
@@ -65,7 +62,9 @@
             </div>
             <div class="col-md-6">
               <label class="form-label">Loại</label>
-              <input id="pCat" type="text" class="form-control" placeholder="Sơ mi">
+              <select id="pCat" class="form-select">
+                <option value="">-- Chọn loại --</option>
+              </select>
             </div>
             <div class="col-12">
               <label class="form-label">Ảnh (URL)</label>
@@ -86,68 +85,117 @@
   </div>
 
   <script>
-    const PROD_KEY = 'admin_products';
-    function loadProds(){ try{ return JSON.parse(localStorage.getItem(PROD_KEY)||'[]'); }catch(e){ return []; } }
-    function saveProds(list){ localStorage.setItem(PROD_KEY, JSON.stringify(list)); }
+    // Biến lưu ID sản phẩm đang chỉnh sửa
+    let editingId = null;
+    // Danh sách danh mục để hiển thị trong dropdown
+    let categories = [];
+
+    // Hàm format tiền Việt Nam
     function money(n){ try{ return new Intl.NumberFormat('vi-VN').format(n)+' đ'; }catch(e){ return n; } }
 
-    function renderProds(){
-      const kw = (document.getElementById('kw').value||'').toLowerCase();
+    // Hàm tải danh sách danh mục và đổ vào dropdown
+    async function loadCategories(){
+      const res = await fetch('/admin/api/categories');
+      categories = await res.json();
+      const select = document.getElementById('pCat');
+      select.innerHTML = '<option value="">-- Chọn loại --</option>';
+      categories.forEach(c=>{
+        select.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+      });
+    }
+
+    // Hàm tải danh sách sản phẩm (có tìm kiếm)
+    async function loadProds(){
+      const kw = document.getElementById('kw').value||'';
+      const url = kw ? `/admin/api/products?keyword=${encodeURIComponent(kw)}` : '/admin/api/products';
+      const res = await fetch(url);
+      const list = await res.json();
+      renderProds(list); // Hiển thị lên bảng
+    }
+
+    // Hàm hiển thị danh sách sản phẩm lên bảng
+    function renderProds(list){
       const body = document.getElementById('prodBody');
-      const list = loadProds().filter(p=> p.name?.toLowerCase().includes(kw));
-      body.innerHTML = '';
-      list.forEach((p,idx)=>{
+      body.innerHTML = ''; // Xóa nội dung cũ
+      list.forEach(p=>{
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${p.id}</td>
-          <td><img src="${p.img||''}" style="width:48px;height:48px;object-fit:cover" class="rounded"></td>
+          <td><img src="${p.image||''}" style="width:48px;height:48px;object-fit:cover" class="rounded"></td>
           <td>${p.name}</td>
           <td class="text-end">${money(p.price||0)}</td>
-          <td>${p.cat||''}</td>
+          <td>${p.categoryName||''}</td>
           <td class="text-end">
-            <button class="btn btn-sm btn-outline-secondary me-1" data-action="edit" data-index="${idx}">Sửa</button>
-            <button class="btn btn-sm btn-outline-danger" data-action="del" data-index="${idx}">Xóa</button>
+            <button class="btn btn-sm btn-outline-secondary me-1" data-action="edit" data-id="${p.id}">Sửa</button>
+            <button class="btn btn-sm btn-outline-danger" data-action="del" data-id="${p.id}">Xóa</button>
           </td>`;
         body.appendChild(tr);
       });
-      body.querySelectorAll('[data-action]')?.forEach(btn=>{
-        btn.addEventListener('click', function(){
-          const idx = parseInt(this.dataset.index);
-          const list = loadProds();
-          if(this.dataset.action==='edit'){
-            const p = list[idx];
-            pId.value=p.id; pName.value=p.name; pPrice.value=p.price; pCat.value=p.cat; pImg.value=p.img; pDesc.value=p.desc||'';
-            new bootstrap.Modal(modalProduct).show();
-            btnSaveProd.onclick = ()=>{
-              p.id=pId.value.trim(); p.name=pName.value.trim(); p.price=parseInt(pPrice.value||0); p.cat=pCat.value.trim(); p.img=pImg.value.trim(); p.desc=pDesc.value.trim();
-              saveProds(list); renderProds(); bootstrap.Modal.getInstance(modalProduct).hide();
-            };
-          }
-          if(this.dataset.action==='del'){
-            if(confirm('Xóa sản phẩm này?')){ list.splice(idx,1); saveProds(list); renderProds(); }
-          }
+      
+      // Xử lý nút Sửa
+      body.querySelectorAll('[data-action="edit"]').forEach(btn=>{
+        btn.addEventListener('click', async function(){
+          const id = parseInt(this.dataset.id);
+          const res = await fetch(`/admin/api/products/${id}`); // Lấy thông tin sản phẩm
+          const p = await res.json();
+          editingId = id; // Lưu ID đang sửa
+          pId.value=p.id; pName.value=p.name; pPrice.value=p.price; pCat.value=p.categoryId||''; pImg.value=p.image; pDesc.value=p.description||'';
+          new bootstrap.Modal(modalProduct).show(); // Hiển modal
+        });
+      });
+
+      // Xử lý nút Xóa
+      body.querySelectorAll('[data-action="del"]').forEach(btn=>{
+        btn.addEventListener('click', async function(){
+          if(!confirm('Xóa sản phẩm này?')) return; // Xác nhận xóa
+          const id = parseInt(this.dataset.id);
+          await fetch(`/admin/api/products/${id}`, {method: 'DELETE'}); // Gọi API xóa
+          loadProds(); // Tải lại danh sách
         });
       });
     }
 
-    document.addEventListener('DOMContentLoaded', function(){
-      document.getElementById('kw').addEventListener('input', renderProds);
-      document.getElementById('btnSaveProd').addEventListener('click', function(){
-        const list = loadProds();
-        list.push({id:pId.value.trim(), name:pName.value.trim(), price:parseInt(pPrice.value||0), cat:pCat.value.trim(), img:pImg.value.trim(), desc:pDesc.value.trim()});
-        saveProds(list); renderProds(); bootstrap.Modal.getInstance(modalProduct).hide();
+    document.addEventListener('DOMContentLoaded', async function(){
+      await loadCategories();
+      loadProds();
+      
+      document.getElementById('kw').addEventListener('input', loadProds);
+      
+      // Xử lý nút Lưu (Tạo mới hoặc Cập nhật)
+      document.getElementById('btnSaveProd').addEventListener('click', async function(){
+        const data = {
+          name: pName.value.trim(),
+          price: parseFloat(pPrice.value||0),
+          discount: 0,
+          image: pImg.value.trim(),
+          description: pDesc.value.trim(),
+          categoryId: parseInt(pCat.value)||null
+        };
+        
+        if(editingId){ // Nếu đang sửa -> gọi API PUT
+          await fetch(`/admin/api/products/${editingId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+          });
+          editingId = null;
+        } else { // Nếu tạo mới -> gọi API POST
+          await fetch('/admin/api/products', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+          });
+        }
+        
+        bootstrap.Modal.getInstance(modalProduct).hide();
+        pId.value=pName.value=pCat.value=pImg.value=pDesc.value=''; pPrice.value='';
+        loadProds();
+      });
+
+      document.getElementById('modalProduct').addEventListener('hidden.bs.modal', function(){
+        editingId = null;
         pId.value=pName.value=pCat.value=pImg.value=pDesc.value=''; pPrice.value='';
       });
-      document.getElementById('btnSeed').addEventListener('click', function(){
-        if(!confirm('Seed dữ liệu demo?')) return;
-        saveProds([
-          {id:'p2', name:'Áo Sơ Mi Nam Smart shirt Tay Dài', price:399000, cat:'Sơ mi', img:'https://product.hstatic.net/1000008082/product/s1_9c03fadfc6ff42fcbdedf9818ea1916c_master.jpeg'},
-          {id:'p3', name:'Áo Sơ Mi Oxford Basic', price:359000, cat:'Sơ mi', img:'https://dongphucpanda.com/wp-content/uploads/2025/09/1025-so-mi-oxford-bst-verse-basic-hong.jpg'},
-          {id:'p4', name:'Áo Polo Cotton', price:299000, cat:'Polo', img:'https://product.hstatic.net/200000309959/product/ao-polo-nam-cotton-basic-luxsion-lich-lam-7_95e0a803e7264c17b63d4656ddd4edc0_master.png'}
-        ]);
-        renderProds();
-      });
-      renderProds();
     });
   </script>
   </article>

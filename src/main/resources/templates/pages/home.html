@@ -27,38 +27,17 @@
     <div class="container">
       <div class="d-flex justify-content-between align-items-end mb-3">
         <h2 class="mb-0">Danh mục</h2>
-        <a th:href="@{/pages/product-list}" class="text-decoration-none">Xem tất cả →</a>
+        <a th:href="@{/products}" class="text-decoration-none">Xem tất cả →</a>
       </div>
       <div class="row g-3">
-        <div class="col-6 col-md-3">
-          <a class="text-decoration-none" th:href="@{/pages/product-list}">
+        <div class="col-6 col-md-3" th:each="c : ${categories}">
+          <a class="text-decoration-none" th:href="@{/products(category=${c.id})}">
             <div class="card h-100">
-              <img class="card-img-top" src="https://4men.com.vn/images/catalogues/ao-so-mi-nam.png" alt="Shirt">
-              <div class="card-body"><h6 class="mb-0">Sơ mi</h6></div>
-            </div>
-          </a>
-        </div>
-        <div class="col-6 col-md-3">
-          <a class="text-decoration-none" th:href="@{/pages/product-list}">
-            <div class="card h-100">
-              <img class="card-img-top" src="https://down-vn.img.susercontent.com/file/vn-11134202-7ras8-m2jbtafw1ygi35" alt="Polo">
-              <div class="card-body"><h6 class="mb-0">Polo</h6></div>
-            </div>
-          </a>
-        </div>
-        <div class="col-6 col-md-3">
-          <a class="text-decoration-none" th:href="@{/pages/product-list}">
-            <div class="card h-100">
-              <img class="card-img-top" src="https://m.yodycdn.com/products/media/articles/%C3%81o%20thun%20c%E1%BB%95%20tr%C3%B2n%20nam%20h%C3%A0ng%20hi%E1%BB%87u.jpg" alt="Tee">
-              <div class="card-body"><h6 class="mb-0">Áo thun</h6></div>
-            </div>
-          </a>
-        </div>
-        <div class="col-6 col-md-3">
-          <a class="text-decoration-none" th:href="@{/pages/product-list}">
-            <div class="card h-100">
-              <img class="card-img-top" src="https://city89.com/wp-content/uploads/2023/03/J-Brand-1.png" alt="Quần">
-              <div class="card-body"><h6 class="mb-0">Quần</h6></div>
+              <img class="card-img-top"
+                   th:src="${#strings.isEmpty(c.image) ? 'https://source.unsplash.com/600x400/?' + #strings.replace(c.name,' ','%20') : c.image}"
+                   alt="category"
+                   onerror="this.onerror=null;this.src='https://source.unsplash.com/600x400/?fashion';">
+              <div class="card-body"><h6 class="mb-0" th:text="${c.name}">Danh mục</h6></div>
             </div>
           </a>
         </div>
@@ -66,58 +45,36 @@
     </div>
   </section>
 
-  <!-- Sản phẩm nổi bật -->
+  <!-- Sản phẩm nổi bật: top rating trung bình và số review -->
   <section class="py-5">
     <div class="container">
       <div class="d-flex justify-content-between align-items-end mb-3">
         <h2 class="mb-0">Sản phẩm nổi bật</h2>
-        <a th:href="@{/pages/product-list}" class="text-decoration-none">Xem thêm →</a>
+        <a th:href="@{/products(sort='popular')}" class="text-decoration-none">Xem thêm →</a>
       </div>
       <div class="row g-3">
-        <!-- 4 sản phẩm demo -->
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-lg-3" th:each="item : ${featured}">
           <div class="card h-100">
-            <a th:href="@{/pages/product-detail}"><img class="card-img-top" src="https://dosi-in.com/file/detailed/487/dosiin-elektron-mafashionsale-giamdonkao-thun-cotton-basic-tee-ssao-thun-local-brand-elektron-cl487510.jpg?w=670&h=670&fit=fill&fm=webp" alt="tee"></a>
-            <div class="card-body">
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <strong>199.000 đ</strong>
-                <span class="text-muted text-decoration-line-through small">249.000 đ</span>
-              </div>
-              <h6 class="card-title mb-0"><a th:href="@{/pages/product-detail}" class="stretched-link text-reset">Tee Cotton Basic</a></h6>
+            <div class="position-relative">
+              <span class="badge bg-danger position-absolute top-0 start-0 m-2"
+                    th:if="${item.discount != null and item.discount.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                    th:text="${'-' + #numbers.formatDecimal(item.discount, 0, 0) + '%'}">-20%</span>
+              <a th:href="@{'/product/detail/' + ${item.id}}">
+                <img class="card-img-top" alt="product" loading="lazy"
+                     th:src="${#strings.isEmpty(item.image) ? '/images/placeholder.svg' : item.image}"
+                     onerror="this.onerror=null;this.src='/images/placeholder.svg';">
+              </a>
             </div>
-          </div>
-        </div>
-        <div class="col-6 col-lg-3">
-          <div class="card h-100">
-            <a th:href="@{/pages/product-detail}"><img class="card-img-top" src="https://down-vn.img.susercontent.com/file/vn-11134208-7ras8-mdk2na812mnjaa" alt="polo"></a>
             <div class="card-body">
               <div class="d-flex align-items-center gap-2 mb-1">
-                <strong>299.000 đ</strong>
+                <strong th:text="${#numbers.formatDecimal(item.salePrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</strong>
+                <span class="text-muted text-decoration-line-through small"
+                      th:if="${item.discount != null and item.discount.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                      th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</span>
               </div>
-              <h6 class="card-title mb-0"><a th:href="@{/pages/product-detail}" class="stretched-link text-reset">Polo Pique</a></h6>
-            </div>
-          </div>
-        </div>
-        <div class="col-6 col-lg-3">
-          <div class="card h-100">
-            <a th:href="@{/pages/product-detail}"><img class="card-img-top" src="https://media.routine.vn/1200x1500/prod/variant/10f25shs008-green-1-jpg-7wdk.webp" alt="shirt"></a>
-            <div class="card-body">
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <strong>349.000 đ</strong>
-                <span class="text-muted text-decoration-line-through small">441.000 đ</span>
-              </div>
-              <h6 class="card-title mb-0"><a th:href="@{/pages/product-detail}" class="stretched-link text-reset">Sơ mi Smart Shirt</a></h6>
-            </div>
-          </div>
-        </div>
-        <div class="col-6 col-lg-3">
-          <div class="card h-100">
-            <a th:href="@{/pages/product-detail}"><img class="card-img-top" src="https://s3.ap-southeast-1.amazonaws.com/thegmen.vn/2024/5/17148247853043elbci.jpg" alt="linen"></a>
-            <div class="card-body">
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <strong>319.000 đ</strong>
-              </div>
-              <h6 class="card-title mb-0"><a th:href="@{/pages/product-detail}" class="stretched-link text-reset">Sơ mi Linen</a></h6>
+              <h6 class="card-title mb-0">
+                <a class="stretched-link text-reset" th:href="@{'/product/detail/' + ${item.id}}" th:text="${item.name}">Tên sản phẩm</a>
+              </h6>
             </div>
           </div>
         </div>
