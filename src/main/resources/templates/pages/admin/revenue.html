@@ -9,7 +9,6 @@
     <div class="container">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h3 class="mb-0">Báo cáo doanh thu</h3>
-        <button class="btn btn-outline-secondary" id="btnSeed">Seed demo</button>
       </div>
 
       <div class="card mb-3">
@@ -56,30 +55,37 @@
       </div>
     </div>
   <script>
-    const ORDER_KEY = 'admin_orders';
-    function loadOrders(){ try{ return JSON.parse(localStorage.getItem(ORDER_KEY)||'[]'); }catch(e){ return []; } }
     function money(n){ try{ return new Intl.NumberFormat('vi-VN').format(n)+' đ'; }catch(e){ return n; } }
+    function formatDate(dt){ 
+      if(!dt) return '';
+      const d = new Date(dt);
+      return d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'});
+    }
 
-    function calcRevenue(){
-      const from = fromDate.value ? new Date(fromDate.value) : null;
-      const to = toDate.value ? new Date(toDate.value) : null;
-      const list = loadOrders().filter(o=> o.status==='completed');
-      const filtered = list.filter(o=>{
-        const parts = (o.date||'').split('/'); // dd/MM/yyyy
-        const d = parts.length===3 ? new Date(parts[2], parts[1]-1, parts[0]) : new Date();
-        if(from && d<from) return false; if(to && d>to) return false; return true;
-      });
-      const sum = filtered.reduce((s,o)=> s + (o.total||0), 0);
-      sumRevenue.textContent = money(sum);
-      sumOrders.textContent = filtered.length;
-      revBody.innerHTML = filtered.map(o=>`<tr><td>${o.id}</td><td>${o.date}</td><td>${o.customer||''}</td><td class="text-end">${money(o.total||0)}</td></tr>`).join('');
+    async function calcRevenue(){
+      let url = '/admin/api/revenue?';
+      if(fromDate.value) url += `startDate=${fromDate.value}T00:00:00&`;
+      if(toDate.value) url += `endDate=${toDate.value}T23:59:59`;
+      
+      const res = await fetch(url);
+      const data = await res.json();
+      
+      sumRevenue.textContent = money(data.totalRevenue||0);
+      sumOrders.textContent = data.totalOrders||0;
+      
+      let ordersUrl = '/admin/api/revenue/orders?';
+      if(fromDate.value) ordersUrl += `startDate=${fromDate.value}T00:00:00&`;
+      if(toDate.value) ordersUrl += `endDate=${toDate.value}T23:59:59`;
+      
+      const ordersRes = await fetch(ordersUrl);
+      const orders = await ordersRes.json();
+      
+      revBody.innerHTML = orders.map(o=>`<tr><td>ORD-${String(o.id).padStart(3, '0')}</td><td>${formatDate(o.orderDate)}</td><td>${o.customerName||''}</td><td class="text-end">${money(o.totalAmount||0)}</td></tr>`).join('');
     }
 
     document.addEventListener('DOMContentLoaded', function(){
       btnCalc.addEventListener('click', calcRevenue);
-      btnSeed.addEventListener('click', function(){
-        alert('Dựa vào dữ liệu đơn hàng bên trang Đơn hàng (Admin) – vui lòng Seed ở đó để có dữ liệu.');
-      });
+      calcRevenue();
     });
   </script>
   </article>
