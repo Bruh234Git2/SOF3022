@@ -26,22 +26,26 @@
                   <th></th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td>#ORD-202509-001</td>
-                  <td>30/09/2025</td>
-                  <td><span class="badge bg-success">Hoàn thành</span></td>
-                  <td class="text-end">927.000 đ</td>
-                  <td class="text-end"><a class="btn btn-sm btn-outline-dark" th:href="@{/pages/order-detail}">Xem</a></td>
-                </tr>
-                <tr>
-                  <td>#ORD-202509-002</td>
-                  <td>12/09/2025</td>
-                  <td><span class="badge bg-warning text-dark">Đang giao</span></td>
-                  <td class="text-end">549.000 đ</td>
-                  <td class="text-end"><a class="btn btn-sm btn-outline-dark" th:href="@{/pages/order-detail}">Xem</a></td>
-                </tr>
-              </tbody>
+             <tbody>
+  <tr th:each="order : ${orders}">
+    <td th:text="'#ORD-' + ${order.id}">ORD-0001</td>
+    <td th:text="${#temporals.format(order.orderDate, 'dd/MM/yyyy')}">30/09/2025</td>
+    <td>
+      <span class="badge"
+            th:classappend="${order.status == 'COMPLETED'} ? 'bg-success' :
+                            (${order.status == 'SHIPPING'} ? 'bg-warning text-dark' :
+                            (${order.status == 'PENDING'} ? 'bg-secondary' : 'bg-danger'))"
+            th:text="${order.status}">
+        Hoàn thành
+      </span>
+    </td>
+    <td class="text-end" th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'POINT', 0, 'POINT')} + ' đ'">927.000 đ</td>
+    <td class="text-end">
+      <a class="btn btn-sm btn-outline-dark" th:href="@{'/orders/' + ${order.id}}">Xem</a>
+    </td>
+  </tr>
+</tbody>
+
             </table>
           </div>
         </div>
