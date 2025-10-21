@@ -1,12 +1,16 @@
 package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+
+import poly.edu.repository.CategoryRepository;
+import poly.edu.repository.ProductRepository;
 import poly.edu.repository.OrderDetailRepository;
 import poly.edu.dto.PurchasedItem;
 
@@ -18,10 +22,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PageController {
 
+    private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
     private final OrderDetailRepository orderDetailRepository;
 
     @GetMapping({"/home", "/"})
-    public String home() {
+    public String home(Model model) {
+        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("featured", productRepository.findTopRated(PageRequest.of(0, 8)));
         return "pages/home";
     }
 
@@ -29,22 +37,22 @@ public class PageController {
     public String productList() {
         return "redirect:/products";
     }
- 
+
     @GetMapping("/product-detail")
     public String productDetail() {
         return "pages/product-detail";
     }
- 
+
     @GetMapping("/cart")
     public String cart() {
         return "pages/cart";
     }
- 
+
     @GetMapping("/login")
     public String login() {
         return "pages/login";
     }
- 
+
     @GetMapping("/sign-up")
     public String signUp() {
         return "pages/sign-up";
