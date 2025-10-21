@@ -26,6 +26,12 @@
             <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"
                     th:selected="${params['category']!=null and params['category']!='' and params['category']==c.id.toString()}"></option>
           </select>
+          <select class="form-select form-select-sm" style="width:120px" name="gender">
+            <option value="" th:selected="${params['gender']==null || params['gender']==''}">Giới tính</option>
+            <option value="Nam" th:selected="${params['gender']=='Nam'}">Nam</option>
+            <option value="Nữ" th:selected="${params['gender']=='Nữ'}">Nữ</option>
+            <option value="Unisex" th:selected="${params['gender']=='Unisex'}">Unisex</option>
+          </select>
           <input class="form-control form-control-sm" style="width:110px" type="number" min="0" step="1000" name="min" placeholder="Giá từ" th:value="${params['min']}">
           <input class="form-control form-control-sm" style="width:110px" type="number" min="0" step="1000" name="max" placeholder="Giá đến" th:value="${params['max']}">
           <div class="form-check">
@@ -39,7 +45,6 @@
             <option value="newest" th:selected="${params['sort']=='newest'}">Mới nhất</option>
           </select>
           <input type="hidden" name="size" th:value="${params['size']}">
-          <input type="hidden" name="gender" th:value="${params['gender']}">
           <button class="btn btn-sm btn-dark" type="submit">Lọc</button>
         </form>
       </div>
