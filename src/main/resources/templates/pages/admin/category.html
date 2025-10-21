@@ -64,56 +64,100 @@
   </div>
 
   <script>
-    const CAT_KEY = 'admin_categories';
-    function loadCats(){ try{ return JSON.parse(localStorage.getItem(CAT_KEY)||'[]'); }catch(e){ return []; } }
-    function saveCats(list){ localStorage.setItem(CAT_KEY, JSON.stringify(list)); }
-    function renderCats(){
+    // Biến lưu ID danh mục đang chỉnh sửa
+    let editingId = null;
+
+    // Hàm tải danh sách danh mục từ API
+    async function loadCats(){
+      try {
+        const res = await fetch('/admin/api/categories');
+        const list = await res.json();
+        renderCats(list);
+      } catch(e) {
+        console.error('Error loading categories:', e);
+      }
+    }
+
+    // Hàm hiển thị danh sách danh mục lên bảng
+    function renderCats(list){
       const body = document.getElementById('catBody');
-      const list = loadCats();
-      body.innerHTML = '';
-      list.forEach((c,idx)=>{
-        const tr = document.createElement('tr');
+      body.innerHTML = ''; // Xóa nội dung cũ
+      list.forEach(c=>{
+        const tr = document.createElement('tr'); // Tạo dòng mới
         tr.innerHTML = `
           <td>${c.id}</td>
           <td>${c.name}</td>
-          <td>${c.desc||''}</td>
+          <td>${c.description||''}</td>
           <td class="text-end">
-            <button class="btn btn-sm btn-outline-secondary me-1" data-action="edit" data-index="${idx}">Sửa</button>
-            <button class="btn btn-sm btn-outline-danger" data-action="del" data-index="${idx}">Xóa</button>
+            <button class="btn btn-sm btn-outline-secondary me-1" data-action="edit" data-id="${c.id}">Sửa</button>
+            <button class="btn btn-sm btn-outline-danger" data-action="del" data-id="${c.id}">Xóa</button>
           </td>`;
         body.appendChild(tr);
       });
-      body.querySelectorAll('[data-action]')?.forEach(btn=>{
-        btn.addEventListener('click', function(){
-          const idx = parseInt(this.dataset.index);
-          const list = loadCats();
-          if(this.dataset.action==='edit'){
-            const c = list[idx];
-            document.getElementById('catId').value = c.id;
-            document.getElementById('catName').value = c.name;
-            document.getElementById('catDesc').value = c.desc||'';
-            new bootstrap.Modal(document.getElementById('modalCategory')).show();
-            document.getElementById('btnSaveCat').onclick = ()=>{
-              c.id = document.getElementById('catId').value.trim();
-              c.name = document.getElementById('catName').value.trim();
-              c.desc = document.getElementById('catDesc').value.trim();
-              saveCats(list); renderCats(); bootstrap.Modal.getInstance(document.getElementById('modalCategory')).hide();
-            };
-          }
-          if(this.dataset.action==='del'){
-            if(confirm('Xóa loại này?')){ list.splice(idx,1); saveCats(list); renderCats(); }
-          }
+      
+      // Xử lý nút Sửa
+      body.querySelectorAll('[data-action="edit"]').forEach(btn=>{
+        btn.addEventListener('click', async function(){
+          const id = parseInt(this.dataset.id);
+          const res = await fetch(`/admin/api/categories/${id}`); // Lấy thông tin danh mục
+          const c = await res.json();
+          editingId = id; // Lưu ID đang sửa
+          document.getElementById('catId').value = c.id;
+          document.getElementById('catName').value = c.name;
+          document.getElementById('catDesc').value = c.description||'';
+          new bootstrap.Modal(document.getElementById('modalCategory')).show(); // Hiển modal
+        });
+      });
+
+      // Xử lý nút Xóa
+      body.querySelectorAll('[data-action="del"]').forEach(btn=>{
+        btn.addEventListener('click', async function(){
+          if(!confirm('Xóa loại này?')) return; // Xác nhận xóa
+          const id = parseInt(this.dataset.id);
+          await fetch(`/admin/api/categories/${id}`, {method: 'DELETE'}); // Gọi API xóa
+          loadCats(); // Tải lại danh sách
         });
       });
     }
+
     document.addEventListener('DOMContentLoaded', function(){
-      renderCats();
-      document.getElementById('btnSaveCat').addEventListener('click', function(){
-        const list = loadCats();
-        list.push({id: catId.value.trim(), name: catName.value.trim(), desc: catDesc.value.trim()});
-        saveCats(list); renderCats();
-        bootstrap.Modal.getInstance(document.getElementById('modalCategory')).hide();
-        catId.value = catName.value = catDesc.value = '';
+      loadCats();
+      
+      // Xử lý nút Lưu (Tạo mới hoặc Cập nhật)
+      document.getElementById('btnSaveCat').addEventListener('click', async function(){
+        const data = {
+          name: document.getElementById('catName').value.trim(),
+          description: document.getElementById('catDesc').value.trim()
+        };
+        
+        if(editingId){ // Nếu đang sửa -> gọi API PUT
+          await fetch(`/admin/api/categories/${editingId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+          });
+          editingId = null;
+        } else { // Nếu tạo mới -> gọi API POST
+          await fetch('/admin/api/categories', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+          });
+        }
+        
+        bootstrap.Modal.getInstance(document.getElementById('modalCategory')).hide(); // Đóng modal
+        document.getElementById('catId').value = '';
+        document.getElementById('catName').value = '';
+        document.getElementById('catDesc').value = '';
+        loadCats(); // Tải lại danh sách
+      });
+
+      // Reset form khi đóng modal
+      document.getElementById('modalCategory').addEventListener('hidden.bs.modal', function(){
+        editingId = null; // Xóa ID đang sửa
+        document.getElementById('catId').value = '';
+        document.getElementById('catName').value = '';
+        document.getElementById('catDesc').value = '';
       });
     });
   </script>

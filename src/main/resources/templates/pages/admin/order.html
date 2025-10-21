@@ -9,9 +9,6 @@
     <div class="container">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h3 class="mb-0">Đơn hàng</h3>
-        <div>
-          <button class="btn btn-outline-secondary me-2" id="btnSeed">Seed demo</button>
-        </div>
       </div>
 
       <div class="card">
@@ -78,56 +75,73 @@
   </div>
 
   <script>
-    const ORDER_KEY = 'admin_orders';
-    function loadOrders(){ try{ return JSON.parse(localStorage.getItem(ORDER_KEY)||'[]'); }catch(e){ return []; } }
-    function saveOrders(list){ localStorage.setItem(ORDER_KEY, JSON.stringify(list)); }
     function money(n){ try{ return new Intl.NumberFormat('vi-VN').format(n)+' đ'; }catch(e){ return n; } }
+    function formatDate(dt){ 
+      if(!dt) return '';
+      const d = new Date(dt);
+      return d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'});
+    }
 
-    function renderOrders(){
+    async function loadOrders(){
       const st = document.getElementById('statusFilter').value;
+      const url = st ? `/admin/api/orders?status=${st}` : '/admin/api/orders';
+      const res = await fetch(url);
+      const list = await res.json();
+      renderOrders(list);
+    }
+
+    function renderOrders(list){
       const body = document.getElementById('orderBody');
-      const list = loadOrders().filter(o=> !st || o.status===st);
       body.innerHTML = '';
-      list.forEach((o,idx)=>{
+      list.forEach(o=>{
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${o.id}</td>
-          <td>${o.date||''}</td>
-          <td>${o.customer||''}</td>
-          <td class="text-end">${money(o.total||0)}</td>
+          <td>ORD-${String(o.id).padStart(3, '0')}</td>
+          <td>${formatDate(o.orderDate)}</td>
+          <td>${o.customerName||''}</td>
+          <td class="text-end">${money(o.totalAmount||0)}</td>
           <td>${labelStatus(o.status)}</td>
           <td class="text-end">
-            <button class="btn btn-sm btn-outline-secondary" data-index="${idx}" data-action="edit">Cập nhật</button>
+            <button class="btn btn-sm btn-outline-secondary" data-id="${o.id}" data-action="edit">Cập nhật</button>
           </td>`;
         body.appendChild(tr);
       });
+      
       body.querySelectorAll('[data-action="edit"]').forEach(btn=>{
-        btn.addEventListener('click', function(){
-          const idx = parseInt(this.dataset.index);
-          const list = loadOrders();
-          const o = list[idx];
-          oId.value = o.id; oStatus.value = o.status;
+        btn.addEventListener('click', async function(){
+          const id = parseInt(this.dataset.id);
+          const res = await fetch(`/admin/api/orders/${id}`);
+          const o = await res.json();
+          oId.value = 'ORD-' + String(o.id).padStart(3, '0');
+          oStatus.value = o.status.toLowerCase();
           new bootstrap.Modal(modalOrder).show();
-          btnSaveOrder.onclick = ()=>{ o.status = oStatus.value; saveOrders(list); renderOrders(); bootstrap.Modal.getInstance(modalOrder).hide(); };
+          btnSaveOrder.onclick = async ()=>{ 
+            await fetch(`/admin/api/orders/${id}/status`, {
+              method: 'PUT',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify(oStatus.value.toUpperCase())
+            });
+            bootstrap.Modal.getInstance(modalOrder).hide();
+            loadOrders();
+          };
         });
       });
     }
+    
     function labelStatus(st){
-      const map={pending:'<span class="badge bg-warning text-dark">Chờ xác nhận</span>', shipping:'<span class="badge bg-info text-dark">Đang giao</span>', completed:'<span class="badge bg-success">Hoàn thành</span>', canceled:'<span class="badge bg-secondary">Đã hủy</span>'};
-      return map[st]||st;
+      const s = (st||'').toLowerCase();
+      const map={
+        pending:'<span class="badge bg-warning text-dark">Chờ xác nhận</span>', 
+        shipping:'<span class="badge bg-info text-dark">Đang giao</span>', 
+        completed:'<span class="badge bg-success">Hoàn thành</span>', 
+        canceled:'<span class="badge bg-secondary">Đã hủy</span>'
+      };
+      return map[s]||st;
     }
 
     document.addEventListener('DOMContentLoaded', function(){
-      statusFilter.addEventListener('change', renderOrders);
-      btnSeed.addEventListener('click', function(){
-        if(!confirm('Seed demo đơn hàng?')) return;
-        saveOrders([
-          {id:'ORD-001', date:'30/09/2025', customer:'Demo User', total:927000, status:'completed'},
-          {id:'ORD-002', date:'15/09/2025', customer:'Demo User', total:548000, status:'shipping'},
-          {id:'ORD-003', date:'10/09/2025', customer:'Nguyễn An', total:1200000, status:'pending'}
-        ]); renderOrders();
-      });
-      renderOrders();
+      statusFilter.addEventListener('change', loadOrders);
+      loadOrders();
     });
   </script>
   </article>
