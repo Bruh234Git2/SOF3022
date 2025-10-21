@@ -10,6 +10,9 @@ import java.util.List;
 
 public interface OrderDetailRepository extends JpaRepository<OrderDetail, Integer> {
 
+    // Tìm chi tiết đơn hàng theo order ID
+    List<OrderDetail> findByOrderId(Integer orderId);
+
     @Query("select new poly.edu.dto.PurchasedItem(d.product, sum(d.quantity)) " +
            "from OrderDetail d " +
            "where d.order.account.email = :email and upper(d.order.status) in :statuses " +
