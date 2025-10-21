@@ -13,7 +13,11 @@ public class ProductImage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+<<<<<<< HEAD
     @ManyToOne
+=======
+    @ManyToOne(fetch = FetchType.LAZY)
+>>>>>>> 139d1abea9813b1401816e33e8fc94bf013419fe
     @JoinColumn(name = "product_id")
     private Product product;
 

@@ -16,229 +16,108 @@
               <li class="breadcrumb-item active" aria-current="page">Ưu đãi</li>
             </ol>
           </nav>
-          <div class="text-muted small">39 Sản phẩm</div>
+          <div class="text-muted small" th:text="${page.totalElements} + ' Sản phẩm'"></div>
         </div>
-        <!-- view tools -->
-        <div class="d-flex gap-2 align-items-center">
-          <button class="btn btn-sm btn-outline-secondary">Bộ lọc</button>
-          <div class="dropdown">
-            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">Sắp xếp</button>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="#">Phổ biến</a></li>
-              <li><a class="dropdown-item" href="#">Giá thấp - cao</a></li>
-              <li><a class="dropdown-item" href="#">Giá cao - thấp</a></li>
-              <li><a class="dropdown-item" href="#">Mới nhất</a></li>
-            </ul>
+        <!-- filters + sort -->
+        <form class="d-flex gap-2 align-items-center" th:action="@{/products}" method="get">
+          <input class="form-control form-control-sm" style="width:220px" type="search" name="q" placeholder="Tìm kiếm" th:value="${params['q']}">
+          <select class="form-select form-select-sm" style="width:200px" name="category">
+            <option value="" th:selected="${params['category']==null || params['category']==''}">Tất cả danh mục</option>
+            <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"
+                    th:selected="${params['category']!=null and params['category']!='' and params['category']==c.id.toString()}"></option>
+          </select>
+          <input class="form-control form-control-sm" style="width:110px" type="number" min="0" step="1000" name="min" placeholder="Giá từ" th:value="${params['min']}">
+          <input class="form-control form-control-sm" style="width:110px" type="number" min="0" step="1000" name="max" placeholder="Giá đến" th:value="${params['max']}">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="sale" value="1" th:checked="${params['sale']=='1'}" id="chkSale">
+            <label class="form-check-label" for="chkSale">Giảm giá</label>
           </div>
-          <div class="btn-group" role="group">
-            <button class="btn btn-sm btn-outline-secondary active">Lưới</button>
-            <button class="btn btn-sm btn-outline-secondary">Danh sách</button>
-          </div>
-        </div>
+          <select class="form-select form-select-sm" style="width:160px" name="sort" th:value="${params['sort']}">
+            <option value="popular" th:selected="${params['sort']=='popular'}">Phổ biến</option>
+            <option value="priceAsc" th:selected="${params['sort']=='priceAsc'}">Giá thấp - cao</option>
+            <option value="priceDesc" th:selected="${params['sort']=='priceDesc'}">Giá cao - thấp</option>
+            <option value="newest" th:selected="${params['sort']=='newest'}">Mới nhất</option>
+          </select>
+          <input type="hidden" name="size" th:value="${params['size']}">
+          <button class="btn btn-sm btn-dark" type="submit">Lọc</button>
+        </form>
       </div>
 
       <!-- grid sản phẩm -->
       <div class="row g-3">
-        <!-- Thẻ sản phẩm mẫu (duplicate để đủ 8-12 item cho UI) -->
-        <!-- item 1 -->
-        <div class="col-6 col-md-4 col-lg-3">
-          <div class="card h-100">
-            <div class="position-relative">
-              <span class="badge bg-danger position-absolute top-0 start-0 m-2">-25%</span>
-              <a class="to-detail" href="#" data-id="p1" data-title="Áo Sơ Mi Nam Smart shirt Tay Ngắn" data-price="349000" data-img="https://media.routine.vn/1200x1500/prod/variant/10f25shs008-green-1-jpg-7wdk.webp"><img src="https://media.routine.vn/1200x1500/prod/variant/10f25shs008-green-1-jpg-7wdk.webp" class="card-img-top" alt="shirt"></a>
-              <button class="btn btn-light position-absolute bottom-0 end-0 m-2 rounded-circle add-to-cart" 
-                data-id="p1" data-title="Smart Shirt - Xanh, M" data-price="349000" 
-                data-img="https://media.routine.vn/1200x1500/prod/variant/10f25shs008-green-1-jpg-7wdk.webp">+</button>
-            </div>
-            <div class="card-body">
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <strong>349.000 đ</strong>
-                <span class="text-muted text-decoration-line-through small">441.000 đ</span>
-              </div>
-              <h6 class="card-title mb-2"><a class="stretched-link text-reset to-detail" href="#" data-id="p1" data-title="Áo Sơ Mi Nam Smart shirt Tay Ngắn" data-price="349000" data-img="https://media.routine.vn/1200x1500/prod/variant/10f25shs008-green-1-jpg-7wdk.webp">Áo Sơ Mi Nam Smart shirt Tay Ngắn</a></h6>
-              <div class="d-flex gap-1">
-                <span class="border rounded px-2 py-1 small">S</span>
-                <span class="border rounded px-2 py-1 small">M</span>
-                <span class="border rounded px-2 py-1 small">L</span>
-              </div>
-            </div>
-          </div>
+        <div class="col-12" th:if="${#lists.isEmpty(items)}">
+          <div class="alert alert-info">Không tìm thấy sản phẩm phù hợp.</div>
         </div>
-
-        <!-- Các item mẫu khác -->
-        <!-- Lặp lại cho đủ grid (8 sản phẩm) -->
-        <div class="col-6 col-md-4 col-lg-3">
+        <div class="col-6 col-md-4 col-lg-3" th:each="item : ${items}">
           <div class="card h-100">
             <div class="position-relative">
-              <span class="badge bg-danger position-absolute top-0 start-0 m-2">-15%</span>
-              <a class="to-detail" href="#" data-id="p2" data-title="Áo Sơ Mi Nam Smart shirt Tay Dài" data-price="399000" data-img="https://product.hstatic.net/1000008082/product/s1_9c03fadfc6ff42fcbdedf9818ea1916c_master.jpeg"><img src="https://product.hstatic.net/1000008082/product/s1_9c03fadfc6ff42fcbdedf9818ea1916c_master.jpeg" class="card-img-top" alt="shirt"></a>
-              <button class="btn btn-light position-absolute bottom-0 end-0 m-2 rounded-circle add-to-cart"
-                data-id="p2" data-title="Smart Shirt Tay Dài" data-price="399000"
-                data-img="https://product.hstatic.net/1000008082/product/s1_9c03fadfc6ff42fcbdedf9818ea1916c_master.jpeg">+</button>
+              <span class="badge bg-danger position-absolute top-0 start-0 m-2"
+                    th:if="${item.discount != null and item.discount.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                    th:text="${'-' + #numbers.formatDecimal(item.discount, 0, 0) + '%'}">-20%</span>
+              <a th:href="@{'/product/detail/' + ${item.id}}">
+                <img class="card-img-top" alt="product" loading="lazy"
+                     th:src="${#strings.isEmpty(item.image) ? '/images/placeholder.svg' : item.image}"
+                     onerror="this.onerror=null;this.src='/images/placeholder.svg';">
+              </a>
             </div>
             <div class="card-body">
               <div class="d-flex align-items-center gap-2 mb-1">
-                <strong>399.000 đ</strong>
-                <span class="text-muted text-decoration-line-through small">471.000 đ</span>
+                <strong th:text="${#numbers.formatDecimal(item.salePrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</strong>
+                <span class="text-muted text-decoration-line-through small"
+                      th:if="${item.discount != null and item.discount.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                      th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</span>
               </div>
-              <h6 class="card-title mb-2"><a class="stretched-link text-reset to-detail" href="#" data-id="p2" data-title="Áo Sơ Mi Nam Smart shirt Tay Dài" data-price="399000" data-img="https://product.hstatic.net/1000008082/product/s1_9c03fadfc6ff42fcbdedf9818ea1916c_master.jpeg">Áo Sơ Mi Nam Smart shirt Tay Dài</a></h6>
-              <div class="d-flex gap-1">
-                <span class="border rounded px-2 py-1 small">M</span>
-                <span class="border rounded px-2 py-1 small">L</span>
-                <span class="border rounded px-2 py-1 small">XL</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-3">
-          <div class="card h-100">
-            <div class="position-relative">
-              <span class="badge bg-danger position-absolute top-0 start-0 m-2">-20%</span>
-              <a class="to-detail" href="#" data-id="p3" data-title="Áo Sơ Mi Oxford Basic" data-price="359000" data-img="https://dongphucpanda.com/wp-content/uploads/2025/09/1025-so-mi-oxford-bst-verse-basic-hong.jpg"><img src="https://dongphucpanda.com/wp-content/uploads/2025/09/1025-so-mi-oxford-bst-verse-basic-hong.jpg" class="card-img-top" alt="shirt"></a>
-              <button class="btn btn-light position-absolute bottom-0 end-0 m-2 rounded-circle add-to-cart"
-                data-id="p3" data-title="Oxford Basic Hồng" data-price="359000"
-                data-img="https://dongphucpanda.com/wp-content/uploads/2025/09/1025-so-mi-oxford-bst-verse-basic-hong.jpg">+</button>
-            </div>
-            <div class="card-body">
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <strong>359.000 đ</strong>
-                <span class="text-muted text-decoration-line-through small">449.000 đ</span>
-              </div>
-              <h6 class="card-title mb-2"><a class="stretched-link text-reset to-detail" href="#" data-id="p3" data-title="Áo Sơ Mi Oxford Basic" data-price="359000" data-img="https://dongphucpanda.com/wp-content/uploads/2025/09/1025-so-mi-oxford-bst-verse-basic-hong.jpg">Áo Sơ Mi Oxford Basic</a></h6>
-              <div class="d-flex gap-1">
-                <span class="border rounded px-2 py-1 small">S</span>
-                <span class="border rounded px-2 py-1 small">M</span>
-                <span class="border rounded px-2 py-1 small">L</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-3">
-          <div class="card h-100">
-            <div class="position-relative">
-              <span class="badge bg-danger position-absolute top-0 start-0 m-2">-30%</span>
-              <a class="to-detail" href="#" data-id="p4" data-title="Áo Polo Cotton" data-price="299000" data-img="https://product.hstatic.net/200000309959/product/ao-polo-nam-cotton-basic-luxsion-lich-lam-7_95e0a803e7264c17b63d4656ddd4edc0_master.png"><img src="https://product.hstatic.net/200000309959/product/ao-polo-nam-cotton-basic-luxsion-lich-lam-7_95e0a803e7264c17b63d4656ddd4edc0_master.png" class="card-img-top" alt="shirt"></a>
-              <button class="btn btn-light position-absolute bottom-0 end-0 m-2 rounded-circle add-to-cart"
-                data-id="p4" data-title="Polo Cotton" data-price="299000"
-                data-img="https://product.hstatic.net/200000309959/product/ao-polo-nam-cotton-basic-luxsion-lich-lam-7_95e0a803e7264c17b63d4656ddd4edc0_master.png">+</button>
-            </div>
-            <div class="card-body">
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <strong>299.000 đ</strong>
-                <span class="text-muted text-decoration-line-through small">429.000 đ</span>
-              </div>
-              <h6 class="card-title mb-2"><a class="stretched-link text-reset to-detail" href="#" data-id="p4" data-title="Áo Polo Cotton" data-price="299000" data-img="https://product.hstatic.net/200000309959/product/ao-polo-nam-cotton-basic-luxsion-lich-lam-7_95e0a803e7264c17b63d4656ddd4edc0_master.png">Áo Polo Cotton</a></h6>
-              <div class="d-flex gap-1">
-                <span class="border rounded px-2 py-1 small">S</span>
-                <span class="border rounded px-2 py-1 small">M</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- thêm 4 item để đủ 8 cho màn hình lớn -->
-        <div class="col-6 col-md-4 col-lg-3">
-          <div class="card h-100">
-            <div class="position-relative">
-              <span class="badge bg-danger position-absolute top-0 start-0 m-2">-10%</span>
-              <a class="to-detail" href="#" data-id="p5" data-title="Tee Graphic" data-price="269000" data-img="https://www.acfc.com.vn/acfc_wp/wp-content/uploads/2024/07/graphic-tee-da-dang-mau-ma.webp"><img src="https://www.acfc.com.vn/acfc_wp/wp-content/uploads/2024/07/graphic-tee-da-dang-mau-ma.webp" class="card-img-top" alt="shirt"></a>
-              <button class="btn btn-light position-absolute bottom-0 end-0 m-2 rounded-circle add-to-cart"
-                data-id="p5" data-title="Tee Graphic" data-price="269000"
-                data-img="https://www.acfc.com.vn/acfc_wp/wp-content/uploads/2024/07/graphic-tee-da-dang-mau-ma.webp">+</button>
-            </div>
-            <div class="card-body">
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <strong>269.000 đ</strong>
-                <span class="text-muted text-decoration-line-through small">299.000 đ</span>
-              </div>
-              <h6 class="card-title mb-2"><a class="stretched-link text-reset to-detail" href="#" data-id="p5" data-title="Tee Graphic" data-price="269000" data-img="https://www.acfc.com.vn/acfc_wp/wp-content/uploads/2024/07/graphic-tee-da-dang-mau-ma.webp">Tee Graphic</a></h6>
-              <div class="d-flex gap-1">
-                <span class="border rounded px-2 py-1 small">L</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-3">
-          <div class="card h-100">
-            <div class="position-relative">
-              <span class="badge bg-danger position-absolute top-0 start-0 m-2">-18%</span>
-              <a class="to-detail" href="#" data-id="p6" data-title="Áo Sơ Mi Kẻ" data-price="379000" data-img="https://lados.vn/wp-content/uploads/2024/10/kieu-ao-so-mi-ke-soc-nam-jpg.webp"><img src="https://lados.vn/wp-content/uploads/2024/10/kieu-ao-so-mi-ke-soc-nam-jpg.webp" class="card-img-top" alt="shirt"></a>
-              <button class="btn btn-light position-absolute bottom-0 end-0 m-2 rounded-circle add-to-cart"
-                data-id="p6" data-title="Sơ Mi Kẻ" data-price="379000"
-                data-img="https://lados.vn/wp-content/uploads/2024/10/kieu-ao-so-mi-ke-soc-nam-jpg.webp">+</button>
-            </div>
-            <div class="card-body">
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <strong>379.000 đ</strong>
-                <span class="text-muted text-decoration-line-through small">459.000 đ</span>
-              </div>
-              <h6 class="card-title mb-2"><a class="stretched-link text-reset to-detail" href="#" data-id="p6" data-title="Áo Sơ Mi Kẻ" data-price="379000" data-img="https://lados.vn/wp-content/uploads/2024/10/kieu-ao-so-mi-ke-soc-nam-jpg.webp">Áo Sơ Mi Kẻ</a></h6>
-              <div class="d-flex gap-1">
-                <span class="border rounded px-2 py-1 small">M</span>
-                <span class="border rounded px-2 py-1 small">L</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-3">
-          <div class="card h-100">
-            <div class="position-relative">
-              <span class="badge bg-danger position-absolute top-0 start-0 m-2">-12%</span>
-              <a class="to-detail" href="#" data-id="p7" data-title="Áo Sơ Mi Linen" data-price="319000" data-img="https://media.routine.vn/400x0/prod/media/ao-so-mi-linen-nam-jpg-9810.webp"><img src="https://media.routine.vn/400x0/prod/media/ao-so-mi-linen-nam-jpg-9810.webp" class="card-img-top" alt="shirt"></a>
-              <button class="btn btn-light position-absolute bottom-0 end-0 m-2 rounded-circle add-to-cart"
-                data-id="p7" data-title="Sơ Mi Linen" data-price="319000"
-                data-img="https://media.routine.vn/400x0/prod/media/ao-so-mi-linen-nam-jpg-9810.webp">+</button>
-            </div>
-            <div class="card-body">
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <strong>319.000 đ</strong>
-                <span class="text-muted text-decoration-line-through small">359.000 đ</span>
-              </div>
-              <h6 class="card-title mb-2"><a class="stretched-link text-reset to-detail" href="#" data-id="p7" data-title="Áo Sơ Mi Linen" data-price="319000" data-img="https://media.routine.vn/400x0/prod/media/ao-so-mi-linen-nam-jpg-9810.webp">Áo Sơ Mi Linen</a></h6>
-              <div class="d-flex gap-1">
-                <span class="border rounded px-2 py-1 small">S</span>
-                <span class="border rounded px-2 py-1 small">M</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-4 col-lg-3">
-          <div class="card h-100">
-            <div class="position-relative">
-              <span class="badge bg-danger position-absolute top-0 start-0 m-2">-22%</span>
-              <a class="to-detail" href="#" data-id="p8" data-title="Áo Sơ Mi Poplin" data-price="339000" data-img="https://n7media.coolmate.me/uploads/September2025/ao-so-mi-nam-dai-tay-premium-poplin-100-cotton-chong-nhan-truot-nuoc-xanh-indigo-4.jpg"><img src="https://n7media.coolmate.me/uploads/September2025/ao-so-mi-nam-dai-tay-premium-poplin-100-cotton-chong-nhan-truot-nuoc-xanh-indigo-4.jpg" class="card-img-top" alt="shirt"></a>
-              <button class="btn btn-light position-absolute bottom-0 end-0 m-2 rounded-circle add-to-cart"
-                data-id="p8" data-title="Sơ Mi Poplin" data-price="339000"
-                data-img="https://n7media.coolmate.me/uploads/September2025/ao-so-mi-nam-dai-tay-premium-poplin-100-cotton-chong-nhan-truot-nuoc-xanh-indigo-4.jpg">+</button>
-            </div>
-            <div class="card-body">
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <strong>339.000 đ</strong>
-                <span class="text-muted text-decoration-line-through small">435.000 đ</span>
-              </div>
-              <h6 class="card-title mb-2"><a class="stretched-link text-reset to-detail" href="#" data-id="p8" data-title="Áo Sơ Mi Poplin" data-price="339000" data-img="https://n7media.coolmate.me/uploads/September2025/ao-so-mi-nam-dai-tay-premium-poplin-100-cotton-chong-nhan-truot-nuoc-xanh-indigo-4.jpg">Áo Sơ Mi Poplin</a></h6>
-              <div class="d-flex gap-1">
-                <span class="border rounded px-2 py-1 small">M</span>
-                <span class="border rounded px-2 py-1 small">L</span>
-              </div>
+              <h6 class="card-title mb-0">
+                <a class="stretched-link text-reset" th:href="@{'/product/detail/' + ${item.id}}" th:text="${item.name}">Tên sản phẩm</a>
+              </h6>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- phân trang demo -->
-      <nav class="mt-4">
+      <!-- phân trang -->
+      <nav class="mt-4" th:if="${page.totalPages > 1}"
+           th:with="curr=${page.number}, total=${page.totalPages},
+                     start=${(page.number-2) < 0 ? 0 : (page.number-2)},
+                     end=${(page.number+2) > (page.totalPages-1) ? (page.totalPages-1) : (page.number+2)}">
         <ul class="pagination justify-content-center">
-          <li class="page-item disabled"><a class="page-link">Trước</a></li>
-          <li class="page-item active"><a class="page-link" href="#">1</a></li>
-          <li class="page-item"><a class="page-link" href="#">2</a></li>
-          <li class="page-item"><a class="page-link" href="#">3</a></li>
-          <li class="page-item"><a class="page-link" href="#">Sau</a></li>
+          <!-- Prev -->
+          <li class="page-item" th:if="${!page.first}">
+            <a class="page-link" th:href="@{/products(page=${curr-1},size=${params['size']},sort=${params['sort']},q=${params['q']},category=${params['category']},min=${params['min']},max=${params['max']},sale=${params['sale']})}">Trước</a>
+          </li>
+          <li class="page-item disabled" th:if="${page.first}"><span class="page-link">Trước</span></li>
+
+          <!-- First 3 pages -->
+          <li class="page-item"
+              th:each="i : ${#numbers.sequence(0, (total-1 < 2 ? total-1 : 2))}"
+              th:classappend="${i==curr} ? 'active'"
+              th:if="${start > 0}">
+            <a class="page-link" th:text="${i+1}"
+               th:href="@{/products(page=${i},size=${params['size']},sort=${params['sort']},q=${params['q']},category=${params['category']},min=${params['min']},max=${params['max']},sale=${params['sale']})}">1</a>
+          </li>
+          <li class="page-item disabled" th:if="${start > 3}"><span class="page-link">…</span></li>
+
+          <!-- Middle window -->
+          <li class="page-item" th:each="i : ${#numbers.sequence(start, end)}" th:classappend="${i==curr} ? 'active'">
+            <a class="page-link" th:text="${i+1}"
+               th:href="@{/products(page=${i},size=${params['size']},sort=${params['sort']},q=${params['q']},category=${params['category']},min=${params['min']},max=${params['max']},sale=${params['sale']})}">1</a>
+          </li>
+
+          <!-- Last 3 pages -->
+          <li class="page-item disabled" th:if="${end < total-4}"><span class="page-link">…</span></li>
+          <li class="page-item"
+              th:each="i : ${#numbers.sequence((total-3 < 0 ? 0 : total-3), total-1)}"
+              th:if="${end < total-1}"
+              th:classappend="${i==curr} ? 'active'">
+            <a class="page-link" th:text="${i+1}"
+               th:href="@{/products(page=${i},size=${params['size']},sort=${params['sort']},q=${params['q']},category=${params['category']},min=${params['min']},max=${params['max']},sale=${params['sale']})}">1</a>
+          </li>
+
+          <!-- Next -->
+          <li class="page-item" th:if="${!page.last}">
+            <a class="page-link" th:href="@{/products(page=${curr+1},size=${params['size']},sort=${params['sort']},q=${params['q']},category=${params['category']},min=${params['min']},max=${params['max']},sale=${params['sale']})}">Sau</a>
+          </li>
+          <li class="page-item disabled" th:if="${page.last}"><span class="page-link">Sau</span></li>
         </ul>
       </nav>
     </div>
