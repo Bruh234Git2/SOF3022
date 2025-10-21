@@ -1,15 +1,35 @@
 package poly.edu.controller;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import poly.edu.repository.CategoryRepository;
+import poly.edu.repository.ProductRepository;
+import poly.edu.repository.OrderDetailRepository;
+import poly.edu.dto.PurchasedItem;
+
+import java.util.Arrays;
+import java.util.List;
+
 @Controller
 @RequestMapping("/pages")
+@RequiredArgsConstructor
 public class PageController {
 
+    private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
+    private final OrderDetailRepository orderDetailRepository;
+
     @GetMapping({"/home", "/"})
-    public String home() {
+    public String home(Model model) {
+        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("featured", productRepository.findTopRated(PageRequest.of(0, 8)));
         return "pages/home";
     }
 
@@ -17,22 +37,22 @@ public class PageController {
     public String productList() {
         return "redirect:/products";
     }
- 
+
     @GetMapping("/product-detail")
     public String productDetail() {
         return "pages/product-detail";
     }
- 
+
     @GetMapping("/cart")
     public String cart() {
         return "pages/cart";
     }
- 
+
     @GetMapping("/login")
     public String login() {
         return "pages/login";
     }
- 
+
     @GetMapping("/sign-up")
     public String signUp() {
         return "pages/sign-up";
@@ -69,7 +89,12 @@ public class PageController {
     }
 
     @GetMapping("/my-product-list")
-    public String myProductList() {
+    public String myProductList(Model model) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth != null ? auth.getName() : null;
+        List<String> statuses = Arrays.asList("COMPLETED", "HOAN_THANH", "HOAN THANH", "DONE");
+        List<PurchasedItem> items = email == null ? List.of() : orderDetailRepository.findPurchasedItems(email, statuses);
+        model.addAttribute("purchasedItems", items);
         return "pages/my-product-list";
     }
 

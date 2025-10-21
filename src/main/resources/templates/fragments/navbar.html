@@ -10,8 +10,8 @@
       </button>
       <div class="collapse navbar-collapse" id="mainNav">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item"><a class="nav-link" href="#">Nam</a></li>
-          <li class="nav-item"><a class="nav-link" href="#">Nữ</a></li>
+          <li class="nav-item"><a class="nav-link" th:href="@{/products(gender='male')}" title="Sản phẩm Nam">Nam</a></li>
+          <li class="nav-item"><a class="nav-link" th:href="@{/products(gender='female')}" title="Sản phẩm Nữ">Nữ</a></li>
           <li class="nav-item"><a class="nav-link" href="#">Thương hiệu</a></li>
           <li class="nav-item"><a id="navPromo" class="nav-link text-danger" th:href="@{/pages/product-list}">Khuyến mãi</a></li>
         </ul>
@@ -29,6 +29,7 @@
             <ul class="dropdown-menu dropdown-menu-end">
               <li><a class="dropdown-item" th:href="@{/account/edit-profile}">Tài Khoản Của Tôi</a></li>
               <li><a class="dropdown-item" th:href="@{/pages/order-list}">Đơn Mua</a></li>
+              <li><a class="dropdown-item" th:href="@{/pages/my-product-list}">Sản phẩm đã mua</a></li>
               <li sec:authorize="hasRole('ADMIN')"><hr class="dropdown-divider"></li>
               <li sec:authorize="hasRole('ADMIN')"><a class="dropdown-item" th:href="@{/pages/admin/category}">Quản trị</a></li>
               <li><hr class="dropdown-divider"></li>
