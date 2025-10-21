@@ -29,6 +29,7 @@
             <ul class="dropdown-menu dropdown-menu-end">
               <li><a class="dropdown-item" th:href="@{/account/edit-profile}">Tài Khoản Của Tôi</a></li>
               <li><a class="dropdown-item" th:href="@{/pages/order-list}">Đơn Mua</a></li>
+              <li><a class="dropdown-item" th:href="@{/pages/my-product-list}">Sản phẩm đã mua</a></li>
               <li sec:authorize="hasRole('ADMIN')"><hr class="dropdown-divider"></li>
               <li sec:authorize="hasRole('ADMIN')"><a class="dropdown-item" th:href="@{/pages/admin/category}">Quản trị</a></li>
               <li><hr class="dropdown-divider"></li>
