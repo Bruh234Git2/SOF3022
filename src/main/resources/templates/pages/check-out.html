@@ -3,6 +3,7 @@
       th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
 <head>
   <title>Thanh toán</title>
+    <meta charset="utf-8">
 </head>
 <body>
   <article>
@@ -13,39 +14,39 @@
         <div class="col-lg-8">
           <div class="card">
             <div class="card-body">
-              <h5 class="card-title">Thông tin người nhận</h5>
-              <form>
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <label class="form-label">Họ và tên</label>
-                    <input type="text" class="form-control" placeholder="Nguyễn Văn A">
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Số điện thoại</label>
-                    <input type="tel" class="form-control" placeholder="09xx xxx xxx">
-                  </div>
-                  <div class="col-12">
-                    <label class="form-label">Email</label>
-                    <input type="email" class="form-control" placeholder="you@example.com">
-                  </div>
-                  <div class="col-12">
-                    <label class="form-label">Địa chỉ</label>
-                    <input type="text" class="form-control" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành">
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Phương thức thanh toán</label>
-                    <select class="form-select">
-                      <option>COD - Thanh toán khi nhận hàng</option>
-                      <option>Chuyển khoản</option>
-                      <option>Ví điện tử</option>
-                    </select>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Ghi chú</label>
-                    <input type="text" class="form-control" placeholder="Giao giờ hành chính...">
-                  </div>
-                </div>
-              </form>
+				<h5 class="card-title">Thông tin người nhận</h5>
+				<form id="checkoutForm">
+				  <div class="row g-3">
+				    <div class="col-md-6">
+				      <label class="form-label">Họ và tên</label>
+				      <input type="text" class="form-control" name="fullName" placeholder="Nguyễn Văn A" required>
+				    </div>
+				    <div class="col-md-6">
+				      <label class="form-label">Số điện thoại</label>
+				      <input type="tel" class="form-control" name="phone" placeholder="09xx xxx xxx" required>
+				    </div>
+				    <div class="col-12">
+				      <label class="form-label">Email</label>
+				      <input type="email" class="form-control" name="email" placeholder="you@example.com" required>
+				    </div>
+				    <div class="col-12">
+				      <label class="form-label">Địa chỉ</label>
+				      <input type="text" class="form-control" name="address" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành" required>
+				    </div>
+				    <div class="col-md-6">
+				      <label class="form-label">Phương thức thanh toán</label>
+				      <select class="form-select" name="paymentMethod">
+				        <option value="COD">COD - Thanh toán khi nhận hàng</option>
+				        <option value="BANKING">Chuyển khoản</option>
+				        <option value="EWALLET">Ví điện tử</option>
+				      </select>
+				    </div>
+				    <div class="col-md-6">
+				      <label class="form-label">Ghi chú</label>
+				      <input type="text" class="form-control" name="notes" placeholder="Giao giờ hành chính...">
+				    </div>
+				  </div>
+				  </form>
             </div>
           </div>
         </div>
@@ -73,51 +74,112 @@
         </div>
       </div>
     </div>
-  <script>
-    function vnd(n){ try{ return new Intl.NumberFormat('vi-VN').format(n)+' đ'; }catch(e){ return n+' đ'; } }
-    function loadCart(){ try{ return JSON.parse(localStorage.getItem('cart')||'[]'); }catch(e){ return []; } }
-    function renderCheckout(){
-      const wrap = document.getElementById('orderItems');
-      const items = loadCart();
-      wrap.innerHTML = '';
-      items.forEach(it=>{
-        const row = document.createElement('div');
-        row.className = 'd-flex align-items-center justify-content-between mb-2';
-        row.innerHTML = `
-          <div class="d-flex align-items-center gap-2">
-            <img src="${it.img}" width="54" height="54" class="rounded" style="object-fit:cover" alt="img">
-            <div>
-              <div class="small">${it.title} x${it.qty||1}</div>
-              <div class="text-muted small">${it.color?`Màu: ${it.color} • `:''}${it.size?`Size: ${it.size}`:''}</div>
-              <div class="text-muted small">${vnd(it.price)}</div>
-            </div>
-          </div>
-          <span>${vnd((it.price||0) * (it.qty||1))}</span>
-        `;
-        wrap.appendChild(row);
-      });
-      const subtotal = items.reduce((s,i)=> s + (i.price||0) * (parseInt(i.qty||1)||1), 0);
-      const discount = 0; // demo
-      const shipping = subtotal>0 ? 30000 : 0;
-      const total = subtotal - discount + shipping;
-      document.getElementById('ckSubtotal').textContent = vnd(subtotal);
-      document.getElementById('ckDiscount').textContent = '-' + vnd(discount).replace(' đ',' đ');
-      document.getElementById('ckShipping').textContent = vnd(shipping);
-      document.getElementById('ckTotal').textContent = vnd(total);
-    }
-    document.addEventListener('DOMContentLoaded', function(){
-      renderCheckout();
-      // Đặt hàng demo: clear cart và quay về order-list
-      const btn = document.getElementById('btnPlaceOrder');
-      if(btn){
-        btn.addEventListener('click', function(){
-          alert('Đặt hàng thành công (demo)!');
-          localStorage.removeItem('cart');
-          window.location.href = '/pages/thank-you';
-        });
-      }
-    });
-  </script>
+	<script>
+	    function vnd(n){ try{ return new Intl.NumberFormat('vi-VN').format(n)+' đ'; }catch(e){ return n+' đ'; } }
+	    function loadCart(){ try{ return JSON.parse(localStorage.getItem('cart')||'[]'); }catch(e){ return []; } }
+	    function renderCheckout(){
+	      const wrap = document.getElementById('orderItems');
+	      const items = loadCart();
+	      wrap.innerHTML = '';
+	      items.forEach(it=>{
+	        const row = document.createElement('div');
+	        row.className = 'd-flex align-items-center justify-content-between mb-2';
+	        row.innerHTML = `
+	          <div class="d-flex align-items-center gap-2">
+	            <img src="${it.img}" width="54" height="54" class="rounded" style="object-fit:cover" alt="img">
+	            <div>
+	              <div class="small">${it.title} x${it.qty||1}</div>
+	              <div class="text-muted small">${it.color?`Màu: ${it.color} • `:''}${it.size?`Size: ${it.size}`:''}</div>
+	              <div class="text-muted small">${vnd(it.price)}</div>
+	            </div>
+	          </div>
+	          <span>${vnd((it.price||0) * (it.qty||1))}</span>
+	        `;
+	        wrap.appendChild(row);
+	      });
+	      const subtotal = items.reduce((s,i)=> s + (i.price||0) * (parseInt(i.qty||1)||1), 0);
+	      const discount = 0; // demo
+	      const shipping = subtotal>0 ? 30000 : 0;
+	      const total = subtotal - discount + shipping;
+	      document.getElementById('ckSubtotal').textContent = vnd(subtotal);
+	      document.getElementById('ckDiscount').textContent = '-' + vnd(discount).replace(' đ',' đ');
+	      document.getElementById('ckShipping').textContent = vnd(shipping);
+	      document.getElementById('ckTotal').textContent = vnd(total);
+	    }
+	    
+		document.addEventListener('DOMContentLoaded', function(){
+	      renderCheckout();
+	      
+	      const btn = document.getElementById('btnPlaceOrder');
+	      const form = document.getElementById('checkoutForm');
+
+	      if(btn){
+	        btn.addEventListener('click', function(){
+	          
+	          // 1. Lấy form và kiểm tra validation
+	          if (!form.checkValidity()) {
+	            form.reportValidity();
+	            return;
+	          }
+
+	          const shippingInfo = Object.fromEntries(new FormData(form).entries());
+	          const cartItems = loadCart();
+
+	          if (cartItems.length === 0) {
+	            alert('Giỏ hàng của bạn đang trống!');
+	            return;
+	          }
+
+	          const payload = {
+	            shippingInfo: shippingInfo,
+	            cartItems: cartItems 
+	          };
+
+			  btn.disabled = true;
+			  btn.textContent = 'Đang xử lý...';
+
+			  const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+			  const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+			  fetch('/orders/place', {
+			    method: 'POST',
+			    headers: {
+			      'Content-Type': 'application/json',
+			      [header]: token
+			    },
+			    body: JSON.stringify(payload)
+			  })
+	          .then(response => {
+	            // 2. KIỂM TRA PHẢN HỒI (RẤT QUAN TRỌNG)
+	            if (response.ok) {
+	              return response.text(); // Thành công, đi tiếp
+	            }
+	            // Nếu server báo lỗi (400, 500...), đọc lỗi và ném ra
+	            return response.text().then(text => { 
+	                throw new Error('Lỗi từ server: ' + text) 
+	            });
+	          })
+			  .then(data => {
+	            // 3. XỬ LÝ THÀNH CÔNG (chỉ chạy khi response.ok)
+			    alert('Đặt hàng thành công!');
+			    localStorage.removeItem('cart');
+			    window.location.href = '/pages/thank-you';
+			  })
+			  .catch(error => {
+	            // 4. XỬ LÝ LỖI (lỗi mạng hoặc lỗi server)
+			    console.error('Lỗi đặt hàng:', error);
+			    // Hiển thị lỗi thực sự cho người dùng
+	            alert('Có lỗi xảy ra khi đặt hàng:\n' + error.message);
+			  })
+	          .finally(() => {
+	            // 5. LUÔN LUÔN CHẠY (reset lại nút)
+	            btn.disabled = false;
+	            btn.textContent = 'Đặt hàng';
+	          });
+	        });
+	      }
+		});
+	  </script>
   </article>
 </body>
 </html>

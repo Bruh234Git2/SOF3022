@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/admin-layout :: view(~{::title}, ~{::article})}">
+<head>
+  <title>Admin - Quản lý đơn hàng</title>
+</head>
+<body>
+  <article>
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">Đơn hàng</h3>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="row g-2 mb-3">
+            <div class="col-md-3">
+              <select id="statusFilter" class="form-select">
+                <option value="">Tất cả trạng thái</option>
+                <option value="pending">Chờ xác nhận</option>
+                <option value="shipping">Đang giao</option>
+                <option value="completed">Hoàn thành</option>
+                <option value="canceled">Đã hủy</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th>Mã đơn</th>
+                  <th>Ngày</th>
+                  <th>Khách hàng</th>
+                  <th class="text-end">Tổng tiền</th>
+                  <th>Trạng thái</th>
+                  <th class="text-end">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="orderBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+
+  <div class="modal fade" id="modalOrder" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Cập nhật đơn hàng</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Mã đơn</label>
+            <input id="oId" type="text" class="form-control" readonly>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Trạng thái</label>
+            <select id="oStatus" class="form-select">
+              <option value="pending">Chờ xác nhận</option>
+              <option value="shipping">Đang giao</option>
+              <option value="completed">Hoàn thành</option>
+              <option value="canceled">Đã hủy</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Hủy</button>
+          <button type="button" class="btn btn-dark" id="btnSaveOrder">Lưu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function money(n){ try{ return new Intl.NumberFormat('vi-VN').format(n)+' đ'; }catch(e){ return n; } }
+    function formatDate(dt){ 
+      if(!dt) return '';
+      const d = new Date(dt);
+      return d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'});
+    }
+
+    async function loadOrders(){
+      const st = document.getElementById('statusFilter').value;
+      const url = st ? `/admin/api/orders?status=${st}` : '/admin/api/orders';
+      const res = await fetch(url);
+      const list = await res.json();
+      renderOrders(list);
+    }
+
+    function renderOrders(list){
+      const body = document.getElementById('orderBody');
+      body.innerHTML = '';
+      list.forEach(o=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>ORD-${String(o.id).padStart(3, '0')}</td>
+          <td>${formatDate(o.orderDate)}</td>
+          <td>${o.customerName||''}</td>
+          <td class="text-end">${money(o.totalAmount||0)}</td>
+          <td>${labelStatus(o.status)}</td>
+          <td class="text-end">
+            <button class="btn btn-sm btn-outline-secondary" data-id="${o.id}" data-action="edit">Cập nhật</button>
+          </td>`;
+        body.appendChild(tr);
+      });
+      
+      body.querySelectorAll('[data-action="edit"]').forEach(btn=>{
+        btn.addEventListener('click', async function(){
+          const id = parseInt(this.dataset.id);
+          const res = await fetch(`/admin/api/orders/${id}`);
+          const o = await res.json();
+          oId.value = 'ORD-' + String(o.id).padStart(3, '0');
+          oStatus.value = o.status.toLowerCase();
+          new bootstrap.Modal(modalOrder).show();
+          btnSaveOrder.onclick = async ()=>{ 
+            await fetch(`/admin/api/orders/${id}/status`, {
+              method: 'PUT',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify(oStatus.value.toUpperCase())
+            });
+            bootstrap.Modal.getInstance(modalOrder).hide();
+            loadOrders();
+          };
+        });
+      });
+    }
+    
+    function labelStatus(st){
+      const s = (st||'').toLowerCase();
+      const map={
+        pending:'<span class="badge bg-warning text-dark">Chờ xác nhận</span>', 
+        shipping:'<span class="badge bg-info text-dark">Đang giao</span>', 
+        completed:'<span class="badge bg-success">Hoàn thành</span>', 
+        canceled:'<span class="badge bg-secondary">Đã hủy</span>'
+      };
+      return map[s]||st;
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+      statusFilter.addEventListener('change', loadOrders);
+      loadOrders();
+    });
+  </script>
+  </article>
+</body>
+</html>

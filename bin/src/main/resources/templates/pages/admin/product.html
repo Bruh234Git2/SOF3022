@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/admin-layout :: view(~{::title}, ~{::article})}">
+<head>
+  <title>Admin - Quản lý sản phẩm</title>
+</head>
+<body>
+  <article>
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">Sản phẩm</h3>
+        <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#modalProduct">Thêm sản phẩm</button>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="row g-2 mb-3">
+            <div class="col-md-4">
+              <input id="kw" type="text" class="form-control" placeholder="Tìm theo tên...">
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th>Mã</th>
+                  <th>Ảnh</th>
+                  <th>Tên</th>
+                  <th class="text-end">Giá</th>
+                  <th>Loại</th>
+                  <th class="text-end">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="prodBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+
+  <div class="modal fade" id="modalProduct" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Sản phẩm</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Mã</label>
+              <input id="pId" type="text" class="form-control" placeholder="P001">
+            </div>
+            <div class="col-md-8">
+              <label class="form-label">Tên</label>
+              <input id="pName" type="text" class="form-control" placeholder="Áo sơ mi...">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Giá</label>
+              <input id="pPrice" type="number" class="form-control" placeholder="349000">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Loại</label>
+              <select id="pCat" class="form-select">
+                <option value="">-- Chọn loại --</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Ảnh (URL)</label>
+              <input id="pImg" type="text" class="form-control" placeholder="https://...">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Mô tả</label>
+              <textarea id="pDesc" class="form-control" rows="3"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Hủy</button>
+          <button type="button" class="btn btn-dark" id="btnSaveProd">Lưu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Biến lưu ID sản phẩm đang chỉnh sửa
+    let editingId = null;
+    // Danh sách danh mục để hiển thị trong dropdown
+    let categories = [];
+
+    // Hàm format tiền Việt Nam
+    function money(n){ try{ return new Intl.NumberFormat('vi-VN').format(n)+' đ'; }catch(e){ return n; } }
+
+    // Hàm tải danh sách danh mục và đổ vào dropdown
+    async function loadCategories(){
+      const res = await fetch('/admin/api/categories');
+      categories = await res.json();
+      const select = document.getElementById('pCat');
+      select.innerHTML = '<option value="">-- Chọn loại --</option>';
+      categories.forEach(c=>{
+        select.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+      });
+    }
+
+    // Hàm tải danh sách sản phẩm (có tìm kiếm)
+    async function loadProds(){
+      const kw = document.getElementById('kw').value||'';
+      const url = kw ? `/admin/api/products?keyword=${encodeURIComponent(kw)}` : '/admin/api/products';
+      const res = await fetch(url);
+      const list = await res.json();
+      renderProds(list); // Hiển thị lên bảng
+    }
+
+    // Hàm hiển thị danh sách sản phẩm lên bảng
+    function renderProds(list){
+      const body = document.getElementById('prodBody');
+      body.innerHTML = ''; // Xóa nội dung cũ
+      list.forEach(p=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${p.id}</td>
+          <td><img src="${p.image||''}" style="width:48px;height:48px;object-fit:cover" class="rounded"></td>
+          <td>${p.name}</td>
+          <td class="text-end">${money(p.price||0)}</td>
+          <td>${p.categoryName||''}</td>
+          <td class="text-end">
+            <button class="btn btn-sm btn-outline-secondary me-1" data-action="edit" data-id="${p.id}">Sửa</button>
+            <button class="btn btn-sm btn-outline-danger" data-action="del" data-id="${p.id}">Xóa</button>
+          </td>`;
+        body.appendChild(tr);
+      });
+      
+      // Xử lý nút Sửa
+      body.querySelectorAll('[data-action="edit"]').forEach(btn=>{
+        btn.addEventListener('click', async function(){
+          const id = parseInt(this.dataset.id);
+          const res = await fetch(`/admin/api/products/${id}`); // Lấy thông tin sản phẩm
+          const p = await res.json();
+          editingId = id; // Lưu ID đang sửa
+          pId.value=p.id; pName.value=p.name; pPrice.value=p.price; pCat.value=p.categoryId||''; pImg.value=p.image; pDesc.value=p.description||'';
+          new bootstrap.Modal(modalProduct).show(); // Hiển modal
+        });
+      });
+
+      // Xử lý nút Xóa
+      body.querySelectorAll('[data-action="del"]').forEach(btn=>{
+        btn.addEventListener('click', async function(){
+          if(!confirm('Xóa sản phẩm này?')) return; // Xác nhận xóa
+          const id = parseInt(this.dataset.id);
+          await fetch(`/admin/api/products/${id}`, {method: 'DELETE'}); // Gọi API xóa
+          loadProds(); // Tải lại danh sách
+        });
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', async function(){
+      await loadCategories();
+      loadProds();
+      
+      document.getElementById('kw').addEventListener('input', loadProds);
+      
+      // Xử lý nút Lưu (Tạo mới hoặc Cập nhật)
+      document.getElementById('btnSaveProd').addEventListener('click', async function(){
+        const data = {
+          name: pName.value.trim(),
+          price: parseFloat(pPrice.value||0),
+          discount: 0,
+          image: pImg.value.trim(),
+          description: pDesc.value.trim(),
+          categoryId: parseInt(pCat.value)||null
+        };
+        
+        if(editingId){ // Nếu đang sửa -> gọi API PUT
+          await fetch(`/admin/api/products/${editingId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+          });
+          editingId = null;
+        } else { // Nếu tạo mới -> gọi API POST
+          await fetch('/admin/api/products', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+          });
+        }
+        
+        bootstrap.Modal.getInstance(modalProduct).hide();
+        pId.value=pName.value=pCat.value=pImg.value=pDesc.value=''; pPrice.value='';
+        loadProds();
+      });
+
+      document.getElementById('modalProduct').addEventListener('hidden.bs.modal', function(){
+        editingId = null;
+        pId.value=pName.value=pCat.value=pImg.value=pDesc.value=''; pPrice.value='';
+      });
+    });
+  </script>
+  </article>
+</body>
+</html>

@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import poly.edu.repository.CategoryRepository;
 import poly.edu.repository.ProductRepository;
 import poly.edu.repository.OrderDetailRepository;
+import poly.edu.dto.ChangePasswordForm;
+import poly.edu.dto.ForgotPasswordForm;
 import poly.edu.dto.PurchasedItem;
 
 import java.util.Arrays;
@@ -31,11 +33,6 @@ public class PageController {
         model.addAttribute("categories", categoryRepository.findAll());
         model.addAttribute("featured", productRepository.findTopRated(PageRequest.of(0, 8)));
         return "pages/home";
-    }
-
-    @GetMapping("/product-list")
-    public String productList() {
-        return "redirect:/products";
     }
 
     @GetMapping("/product-detail")
@@ -64,12 +61,14 @@ public class PageController {
     }
 
     @GetMapping("/forgot-password")
-    public String forgotPassword() {
+    public String forgotPassword(Model model) {
+    	model.addAttribute("form", new ForgotPasswordForm());
         return "pages/forgot-password";
     }
 
     @GetMapping("/change-password")
-    public String changePassword() {
+    public String showChangePassword(Model model) {
+        model.addAttribute("form", new ChangePasswordForm()); // ✅ luôn có object để Thymeleaf binding
         return "pages/change-password";
     }
 
@@ -77,12 +76,6 @@ public class PageController {
     public String checkout() {
         return "pages/check-out";
     }
-
-    @GetMapping("/order-list")
-    public String orderList() {
-        return "pages/order-list";
-    }
-
     @GetMapping("/order-detail")
     public String orderDetail() {
         return "pages/order-detail";
