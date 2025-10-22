@@ -3,7 +3,6 @@ package poly.edu.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-
 import java.math.BigDecimal;
 
 @Getter
@@ -17,13 +16,25 @@ public class OrderDetail {
 
     @ManyToOne
     @JoinColumn(name = "order_id")
-    private poly.edu.entity.Order order;
+    private Order order;
 
     @ManyToOne
     @JoinColumn(name = "product_id")
     private Product product;
 
+    @Column(nullable = false)
     private Integer quantity;
 
-    private BigDecimal price;
+    @Column(precision = 18, scale = 2, nullable = false)
+    private BigDecimal price; // Giá tại thời điểm mua
+
+    // --- THÊM CÁC TRƯỜNG BÊN DƯỚI ---
+    @Column(name = "product_name", length = 255)
+    private String productName; // Lưu lại tên SP
+
+    @Column(length = 50)
+    private String color; // Lưu lại màu đã chọn
+
+    @Column(length = 50)
+    private String size; // Lưu lại size đã chọn
 }

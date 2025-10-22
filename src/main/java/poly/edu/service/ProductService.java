@@ -120,11 +120,11 @@ public class ProductService {
             if("1".equals(onSale)){
                 ps.add(cb.greaterThan(root.get("discount"), BigDecimal.ZERO));
             }
-            // Filter theo gender (Nam, Nữ, Unisex)
-            String gender = trim(params.get("gender"));
-            if(gender != null){
-                ps.add(cb.equal(root.get("gender"), gender));
-            }
+            // Filter theo gender (Nam, Nữ, Unisex) - removed as Product entity doesn't have gender field
+            // String gender = trim(params.get("gender"));
+            // if(gender != null){
+            //     ps.add(cb.equal(root.get("gender"), gender));
+            // }
             return cb.and(ps.toArray(new Predicate[0]));
         };
         return productRepository.findAll(spec, pageable);

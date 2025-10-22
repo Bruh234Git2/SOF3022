@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/admin-layout :: view(~{::title}, ~{::article})}">
+<head>
+  <title>Admin - Quản lý loại hàng</title>
+</head>
+<body>
+  <article>
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">Loại hàng</h3>
+        <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#modalCategory">Thêm loại</button>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th>Mã</th>
+                  <th>Tên loại</th>
+                  <th>Mô tả</th>
+                  <th class="text-end">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="catBody">
+                <!-- render bằng JS demo -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+
+  <div class="modal fade" id="modalCategory" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Loại hàng</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Mã</label>
+            <input id="catId" type="text" class="form-control" placeholder="CAT001">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Tên loại</label>
+            <input id="catName" type="text" class="form-control" placeholder="Áo sơ mi">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Mô tả</label>
+            <textarea id="catDesc" class="form-control" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Hủy</button>
+          <button type="button" class="btn btn-dark" id="btnSaveCat">Lưu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Biến lưu ID danh mục đang chỉnh sửa
+    let editingId = null;
+
+    // Hàm tải danh sách danh mục từ API
+    async function loadCats(){
+      try {
+        const res = await fetch('/admin/api/categories');
+        const list = await res.json();
+        renderCats(list);
+      } catch(e) {
+        console.error('Error loading categories:', e);
+      }
+    }
+
+    // Hàm hiển thị danh sách danh mục lên bảng
+    function renderCats(list){
+      const body = document.getElementById('catBody');
+      body.innerHTML = ''; // Xóa nội dung cũ
+      list.forEach(c=>{
+        const tr = document.createElement('tr'); // Tạo dòng mới
+        tr.innerHTML = `
+          <td>${c.id}</td>
+          <td>${c.name}</td>
+          <td>${c.description||''}</td>
+          <td class="text-end">
+            <button class="btn btn-sm btn-outline-secondary me-1" data-action="edit" data-id="${c.id}">Sửa</button>
+            <button class="btn btn-sm btn-outline-danger" data-action="del" data-id="${c.id}">Xóa</button>
+          </td>`;
+        body.appendChild(tr);
+      });
+      
+      // Xử lý nút Sửa
+      body.querySelectorAll('[data-action="edit"]').forEach(btn=>{
+        btn.addEventListener('click', async function(){
+          const id = parseInt(this.dataset.id);
+          const res = await fetch(`/admin/api/categories/${id}`); // Lấy thông tin danh mục
+          const c = await res.json();
+          editingId = id; // Lưu ID đang sửa
+          document.getElementById('catId').value = c.id;
+          document.getElementById('catName').value = c.name;
+          document.getElementById('catDesc').value = c.description||'';
+          new bootstrap.Modal(document.getElementById('modalCategory')).show(); // Hiển modal
+        });
+      });
+
+      // Xử lý nút Xóa
+      body.querySelectorAll('[data-action="del"]').forEach(btn=>{
+        btn.addEventListener('click', async function(){
+          if(!confirm('Xóa loại này?')) return; // Xác nhận xóa
+          const id = parseInt(this.dataset.id);
+          await fetch(`/admin/api/categories/${id}`, {method: 'DELETE'}); // Gọi API xóa
+          loadCats(); // Tải lại danh sách
+        });
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+      loadCats();
+      
+      // Xử lý nút Lưu (Tạo mới hoặc Cập nhật)
+      document.getElementById('btnSaveCat').addEventListener('click', async function(){
+        const data = {
+          name: document.getElementById('catName').value.trim(),
+          description: document.getElementById('catDesc').value.trim()
+        };
+        
+        if(editingId){ // Nếu đang sửa -> gọi API PUT
+          await fetch(`/admin/api/categories/${editingId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+          });
+          editingId = null;
+        } else { // Nếu tạo mới -> gọi API POST
+          await fetch('/admin/api/categories', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+          });
+        }
+        
+        bootstrap.Modal.getInstance(document.getElementById('modalCategory')).hide(); // Đóng modal
+        document.getElementById('catId').value = '';
+        document.getElementById('catName').value = '';
+        document.getElementById('catDesc').value = '';
+        loadCats(); // Tải lại danh sách
+      });
+
+      // Reset form khi đóng modal
+      document.getElementById('modalCategory').addEventListener('hidden.bs.modal', function(){
+        editingId = null; // Xóa ID đang sửa
+        document.getElementById('catId').value = '';
+        document.getElementById('catName').value = '';
+        document.getElementById('catDesc').value = '';
+      });
+    });
+  </script>
+  </article>
+</body>
+</html>

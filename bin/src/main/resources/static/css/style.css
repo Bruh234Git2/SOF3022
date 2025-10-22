@@ -1,0 +1,43 @@
+/* Base typography */
+:root{
+  --text:#212529;
+  --muted:#6c757d;
+  --primary:#111;
+  --accent:#e03131; /* nhấn đỏ kiểu giá khuyến mãi */
+}
+html,body{height:100%;}
+body{
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  color:var(--text);
+  background:#fff;
+}
+
+/* Navbar */
+.navbar-brand{letter-spacing:.5px}
+.nav-link{font-weight:500}
+.nav-link:hover{color:#000}
+
+/* Section spacing */
+.container h3,.container h2{font-weight:700}
+.p-5.bg-light{background:#f8f9fa !important}
+
+/* Cards */
+.card{border:1px solid #eee}
+.card .card-title{font-weight:600}
+.card:hover{transform:translateY(-2px); transition:all .2s ease; box-shadow:0 10px 20px rgba(0,0,0,.06)}
+.card-img-top{object-fit:cover; height:220px}
+
+/* Buttons */
+.btn-outline-dark{border-color:#111;color:#111}
+.btn-outline-dark:hover{background:#111;color:#fff}
+
+/* Footer */
+footer{font-size:.95rem}
+
+/* Utilities */
+.text-danger{color:var(--accent)!important}
+
+/* Grid fine tune for small screens */
+@media (max-width: 575.98px){
+  .card-img-top{height:180px}
+}

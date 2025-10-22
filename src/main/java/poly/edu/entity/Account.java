@@ -3,14 +3,19 @@ package poly.edu.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
+import java.util.Collection; // Thêm
+import java.util.Collections; // Thêm
 
 @Getter
 @Setter
 @Entity
 @Table(name = "Accounts")
-public class Account {
+public class Account implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -52,6 +57,11 @@ public class Account {
     @Column(name = "birth_date")
     private LocalDate birthDate;
 
+    @Column(name = "reset_password_token")
+    private String resetPasswordToken;
+
+    @Column(name = "token_expiry_date")
+    private LocalDateTime tokenExpiryDate;
     @PrePersist
     public void prePersist(){
         if(status == null) status = "ACTIVE";
@@ -62,5 +72,41 @@ public class Account {
     @PreUpdate
     public void preUpdate(){
         updatedAt = LocalDateTime.now();
+    }
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        String roleName = (this.role != null && this.role.getName() != null)
+                ? this.role.getName().toUpperCase()
+                : "USER"; // Mặc định là USER nếu không có role
+        return Collections.singleton(new SimpleGrantedAuthority("ROLE_" + roleName));
+    }
+
+    // `getPassword()` đã có sẵn từ @Getter
+
+    @Override
+    public String getUsername() {
+        // Trả về email vì bạn đang dùng email để đăng nhập
+        return this.email; 
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true; // Tài khoản không bao giờ hết hạn
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true; // Tài khoản không bị khóa (bạn có thể thay đổi logic này)
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true; // Mật khẩu không bao giờ hết hạn
+    }
+
+    @Override
+    public boolean isEnabled() {
+        // Dùng trường status để kiểm tra
+        return "ACTIVE".equalsIgnoreCase(this.status);
     }
 }

@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/admin-layout :: view(~{::title}, ~{::article})}">
+<head>
+  <title>Admin - Quản lý tài khoản</title>
+</head>
+<body>
+  <article>
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">Tài khoản</h3>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="row g-2 mb-3">
+            <div class="col-md-4"><input id="kw" class="form-control" placeholder="Tìm theo email hoặc tên..."></div>
+            <div class="col-md-3">
+              <select id="roleFilter" class="form-select">
+                <option value="">Tất cả quyền</option>
+                <option value="admin">Admin</option>
+                <option value="user">User</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Họ tên</th>
+                  <th>Quyền</th>
+                  <th class="text-end">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="accBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+
+  <div class="modal fade" id="modalAccount" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Tài khoản</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input id="aEmail" class="form-control" placeholder="you@example.com">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Họ tên</label>
+            <input id="aName" class="form-control" placeholder="Nguyễn Văn A">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Quyền</label>
+            <select id="aRole" class="form-select">
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline-dark" data-bs-dismiss="modal">Hủy</button>
+          <button class="btn btn-dark" id="btnSaveAcc">Lưu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let editingId = null;
+
+    async function loadAcc(){
+      const kw = document.getElementById('kw').value||'';
+      const rf = document.getElementById('roleFilter').value;
+      let url = '/admin/api/accounts?';
+      if(kw) url += `keyword=${encodeURIComponent(kw)}&`;
+      if(rf) url += `role=${rf}`;
+      const res = await fetch(url);
+      const list = await res.json();
+      renderAcc(list);
+    }
+
+    function renderAcc(list){
+      const body = document.getElementById('accBody');
+      body.innerHTML = '';
+      list.forEach(a=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${a.email}</td>
+          <td>${a.fullName||''}</td>
+          <td>${a.roleName||'USER'}</td>
+          <td class="text-end">
+            <button class="btn btn-sm btn-outline-secondary me-1" data-action="edit" data-id="${a.id}">Sửa</button>
+            <button class="btn btn-sm btn-outline-danger" data-action="del" data-id="${a.id}">Xóa</button>
+          </td>`;
+        body.appendChild(tr);
+      });
+      
+      body.querySelectorAll('[data-action="edit"]').forEach(btn=>{
+        btn.addEventListener('click', async function(){
+          const id = parseInt(this.dataset.id);
+          const res = await fetch(`/admin/api/accounts/${id}`);
+          const a = await res.json();
+          editingId = id;
+          aEmail.value=a.email; aName.value=a.fullName; aRole.value=(a.roleName||'USER').toLowerCase();
+          new bootstrap.Modal(modalAccount).show();
+        });
+      });
+
+      body.querySelectorAll('[data-action="del"]').forEach(btn=>{
+        btn.addEventListener('click', async function(){
+          if(!confirm('Xóa tài khoản này?')) return;
+          const id = parseInt(this.dataset.id);
+          await fetch(`/admin/api/accounts/${id}`, {method: 'DELETE'});
+          loadAcc();
+        });
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+      roleFilter.addEventListener('change', loadAcc);
+      kw.addEventListener('input', loadAcc);
+      
+      document.getElementById('btnSaveAcc').addEventListener('click', async function(){
+        if(!editingId) return;
+        
+        const data = {
+          email: aEmail.value.trim(),
+          fullName: aName.value.trim(),
+          roleName: aRole.value.toUpperCase()
+        };
+        
+        await fetch(`/admin/api/accounts/${editingId}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(data)
+        });
+        
+        bootstrap.Modal.getInstance(modalAccount).hide();
+        aEmail.value=aName.value=''; aRole.value='user';
+        editingId = null;
+        loadAcc();
+      });
+
+      document.getElementById('modalAccount').addEventListener('hidden.bs.modal', function(){
+        editingId = null;
+        aEmail.value=aName.value=''; aRole.value='user';
+      });
+      
+      loadAcc();
+    });
+  </script>
+  </article>
+</body>
+</html>

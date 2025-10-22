@@ -1,44 +1,60 @@
 package poly.edu.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import poly.edu.entity.Order;
-import poly.edu.entity.OrderDetail;
-import poly.edu.service.OrderDetailService;
+import poly.edu.dto.OrderRequestDTO;
+import poly.edu.entity.Account;
+import poly.edu.entity.Order; // Sửa từ CustomerOrder thành Order
+import poly.edu.repository.OrderRepository;
 import poly.edu.service.OrderService;
 
 import java.util.List;
 
 @Controller
-@RequestMapping("/orders")
 @RequiredArgsConstructor
 public class OrderController {
-    private final OrderService orderService;
-    private final OrderDetailService orderDetailService;
 
-    // Danh sách đơn hàng của người dùng
-    @GetMapping
-    public String listOrders(Model model, @RequestParam(required = false) String status) {
-        var orders = (status == null)
-                ? orderService.getAllOrders()
-                : orderService.getOrdersByStatus(status);
-        model.addAttribute("orders", orders);
-        return "pages/order-list"; // file HTML bạn đã có
+    private final OrderService orderService;
+    private final OrderRepository orderRepository;
+
+    /**
+     * API để nhận đơn hàng
+     */
+    @PostMapping("/orders/place")
+    public ResponseEntity<?> placeOrder(@Valid @RequestBody OrderRequestDTO orderRequest,
+                                        @AuthenticationPrincipal Account currentUser) {
+        if (currentUser == null) {
+            return ResponseEntity.status(401).body("Vui lòng đăng nhập để đặt hàng");
+        }
+        try {
+            // Gọi hàm placeOrder đã tạo
+            orderService.placeOrder(orderRequest, currentUser); 
+            return ResponseEntity.ok().body("Đặt hàng thành công!");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("Lỗi đặt hàng: " + e.getMessage());
+        }
     }
 
-    // Chi tiết đơn hàng
-    @GetMapping("/{id}")
-    public String orderDetail(@PathVariable Integer id, Model model) {
-        var order = orderService.getOrderById(id);
-        if (order == null) {
-            return "redirect:/orders"; // nếu không tồn tại thì quay về danh sách
+    /**
+     * Hiển thị trang danh sách đơn hàng (thay cho PageController)
+     */
+    @GetMapping("/pages/order-list")
+    public String showOrderList(Model model, @AuthenticationPrincipal Account currentUser) {
+        if (currentUser == null) {
+            return "redirect:/auth/login"; // Yêu cầu đăng nhập
         }
-        List<OrderDetail> details = orderDetailService.getDetailsByOrderId(id);
-
-        model.addAttribute("order", order);
-        model.addAttribute("details", details);
-        return "pages/order-detail"; // file HTML chi tiết đơn hàng
+        
+        // SỬA LẠI DÒNG NÀY
+        // Truyền thẳng đối tượng 'currentUser' (Account)
+        List<Order> orders = orderRepository.findByAccountOrderByOrderDateDesc(currentUser);
+        
+        model.addAttribute("orders", orders);
+        return "pages/order-list"; // Trả về file order-list.html
     }
 }
