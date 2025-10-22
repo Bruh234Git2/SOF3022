@@ -19,6 +19,6 @@ public class Category {
     @Column(length = 255)
     private String description;
 
-    @Column(length = 255, name = "image")
-    private String image; // Ảnh đại diện danh mục
+    @Column(length = 255)
+    private String image;
 }
