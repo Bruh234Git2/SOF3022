@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+<head>
+  <title>Trang chủ - SHOP OMG!</title>
+</head>
+<body>
+  <article>
+  <!-- Banner -->
+  <section class="bg-light py-5">
+    <div class="container">
+      <div class="row align-items-center g-4">
+        <div class="col-md-6">
+          <h1 class="display-5 fw-bold">Thời trang tối giản, hiện đại</h1>
+          <p class="lead text-muted">Khám phá BST mới cùng ưu đãi lên đến 30% cho thành viên.</p>
+          <a th:href="@{/pages/product-list}" class="btn btn-dark btn-lg">Mua ngay</a>
+        </div>
+        <div class="col-md-6">
+          <img class="img-fluid rounded" src="https://images.unsplash.com/photo-1516826957135-700dedea698c?q=80&w=1400&auto=format&fit=crop" alt="banner">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Danh mục -->
+  <section class="py-5">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-end mb-3">
+        <h2 class="mb-0">Danh mục</h2>
+        <a th:href="@{/products}" class="text-decoration-none">Xem tất cả →</a>
+      </div>
+      <div class="row g-3">
+        <div class="col-6 col-md-3" th:each="c : ${categories}">
+          <a class="text-decoration-none" th:href="@{/products(category=${c.id})}">
+            <div class="card h-100">
+              <img class="card-img-top"
+                   th:src="${#strings.isEmpty(c.image) ? 'https://source.unsplash.com/600x400/?' + #strings.replace(c.name,' ','%20') : c.image}"
+                   alt="category"
+                   onerror="this.onerror=null;this.src='https://source.unsplash.com/600x400/?fashion';">
+              <div class="card-body"><h6 class="mb-0" th:text="${c.name}">Danh mục</h6></div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sản phẩm nổi bật: top rating trung bình và số review -->
+  <section class="py-5">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-end mb-3">
+        <h2 class="mb-0">Sản phẩm nổi bật</h2>
+        <a th:href="@{/products(sort='popular')}" class="text-decoration-none">Xem thêm →</a>
+      </div>
+      <div class="row g-3">
+        <div class="col-6 col-lg-3" th:each="item : ${featured}">
+          <div class="card h-100">
+            <div class="position-relative">
+              <span class="badge bg-danger position-absolute top-0 start-0 m-2"
+                    th:if="${item.discount != null and item.discount.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                    th:text="${'-' + #numbers.formatDecimal(item.discount, 0, 0) + '%'}">-20%</span>
+              <a th:href="@{'/product/detail/' + ${item.id}}">
+                <img class="card-img-top" alt="product" loading="lazy"
+                     th:src="${#strings.isEmpty(item.image) ? '/images/placeholder.svg' : item.image}"
+                     onerror="this.onerror=null;this.src='/images/placeholder.svg';">
+              </a>
+            </div>
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <strong th:text="${#numbers.formatDecimal(item.salePrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</strong>
+                <span class="text-muted text-decoration-line-through small"
+                      th:if="${item.discount != null and item.discount.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                      th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</span>
+              </div>
+              <h6 class="card-title mb-0">
+                <a class="stretched-link text-reset" th:href="@{'/product/detail/' + ${item.id}}" th:text="${item.name}">Tên sản phẩm</a>
+              </h6>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  </article>
+</body>
+</html>

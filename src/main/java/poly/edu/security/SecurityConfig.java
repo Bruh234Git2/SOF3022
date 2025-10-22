@@ -28,6 +28,7 @@ public class SecurityConfig {
             .csrf(Customizer.withDefaults())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/pages/admin/**", "/admin/**").hasRole("ADMIN")
+                .requestMatchers("/account/forgot-password", "/account/reset-password/**").permitAll()
                 .requestMatchers("/", "/auth/**", "/account/sign-up", 
                                  "/pages/**", 
                                  "/css/**", "/images/**", "/js/**", "/uploads/**").permitAll()

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: view(~{::title}, ~{::article})}">
+<head>
+  <title>Cập nhật tài khoản</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<article>
+  <div class="container" style="max-width: 920px;">
+    <h3 class="mb-4">Cập nhật thông tin</h3>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="card h-100">
+          <div class="card-body text-center">
+            <img th:src="${account != null && account.avatar != null} ? ${account.avatar} : '/images/user-default.svg'" class="rounded-circle mb-3" width="140" height="140" alt="avatar">
+            <div class="d-grid gap-2">
+              <label class="btn btn-outline-dark mb-0" for="avatarInput">Chọn ảnh</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-body">
+            <form th:action="@{/account/edit-profile}" method="post" th:object="${profile}" enctype="multipart/form-data">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+              <input type="file" id="avatarInput" name="avatar" accept="image/*" class="d-none" onchange="previewAvatar(event)">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Họ và tên</label>
+                  <input type="text" class="form-control" th:field="*{fullName}" placeholder="Nguyễn Văn A">
+                  <div class="text-danger small" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Số điện thoại</label>
+                  <input type="tel" class="form-control" th:field="*{phone}" placeholder="09xx xxx xxx">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Email</label>
+                  <input type="email" class="form-control" th:value="${account != null ? account.email : ''}" disabled>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Ngày sinh</label>
+                  <input type="date" class="form-control" th:field="*{birthDate}">
+                  <div class="text-danger small" th:if="${#fields.hasErrors('birthDate')}" th:errors="*{birthDate}"></div>
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Địa chỉ</label>
+                  <input type="text" class="form-control" th:field="*{address}" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành">
+                </div>
+                <div class="col-12">
+                  <button type="submit" class="btn btn-dark">Lưu thay đổi</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function previewAvatar(evt){
+      const file = evt.target.files && evt.target.files[0];
+      if(!file) return;
+      const img = document.querySelector('img[alt="avatar"]');
+      const reader = new FileReader();
+      reader.onload = e => { img.src = e.target.result; };
+      reader.readAsDataURL(file);
+    }
+  </script>
+</article>
+</body>
+</html>

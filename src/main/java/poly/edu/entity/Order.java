@@ -40,5 +40,5 @@ public class Order {
     private String receiverAddress;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<OrderDetail> details;
+    private List<OrderDetail> orderDetails;
 }

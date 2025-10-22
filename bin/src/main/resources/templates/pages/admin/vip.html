@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/admin-layout :: view(~{::title}, ~{::article})}">
+<head>
+  <title>Admin - Khách hàng VIP</title>
+</head>
+<body>
+  <article>
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">Khách hàng VIP</h3>
+        <button class="btn btn-outline-secondary" id="btnCalc">Tính danh sách</button>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <p class="text-muted">Danh sách khách VIP được xác định dựa trên tổng chi tiêu vượt ngưỡng.</p>
+          <div class="row g-2 mb-3">
+            <div class="col-md-4"><input id="threshold" type="number" class="form-control" placeholder="Ngưỡng (ví dụ: 1.000.000)"></div>
+          </div>
+          <div class="table-responsive">
+            <table class="table">
+              <thead><tr><th>Khách hàng</th><th class="text-end">Tổng chi tiêu</th></tr></thead>
+              <tbody id="vipBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  <script>
+    function money(n){ try{ return new Intl.NumberFormat('vi-VN').format(n)+' đ'; }catch(e){ return n; } }
+
+    async function calcVIP(){
+      const thr = parseInt(threshold.value||'1000000');
+      const res = await fetch(`/admin/api/vip-customers?threshold=${thr}`);
+      const list = await res.json();
+      vipBody.innerHTML = list.map(c=> `<tr><td>${c.customerName}</td><td class="text-end">${money(c.totalSpent||0)}</td></tr>`).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+      btnCalc.addEventListener('click', calcVIP);
+      threshold.value = '1000000';
+      calcVIP();
+    });
+  </script>
+  </article>
+</body>
+</html>
