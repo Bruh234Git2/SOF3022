@@ -37,4 +37,5 @@ public class OrderDetail {
 
     @Column(length = 50)
     private String size; // Lưu lại size đã chọn
+    
 }

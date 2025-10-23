@@ -75,24 +75,49 @@
   </div>
 
   <script>
+    // Hàm định dạng tiền tệ theo chuẩn Việt Nam
     function money(n){ try{ return new Intl.NumberFormat('vi-VN').format(n)+' đ'; }catch(e){ return n; } }
+    
+    // Hàm định dạng ngày giờ theo chuẩn Việt Nam
     function formatDate(dt){ 
       if(!dt) return '';
       const d = new Date(dt);
       return d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'});
     }
 
+    // Hàm tải danh sách đơn hàng từ server
     async function loadOrders(){
+      // Lấy giá trị bộ lọc trạng thái
       const st = document.getElementById('statusFilter').value;
-      const url = st ? `/admin/api/orders?status=${st}` : '/admin/api/orders';
-      const res = await fetch(url);
+      // Xây dựng URL với cache busting để luôn lấy dữ liệu mới
+      const timestamp = new Date().getTime();
+      const url = st 
+        ? `/admin/api/orders?status=${st}&_t=${timestamp}` 
+        : `/admin/api/orders?_t=${timestamp}`;
+      
+      console.log('Loading orders from:', url);
+      
+      // Gọi API để lấy danh sách đơn hàng (không cache)
+      const res = await fetch(url, {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
       const list = await res.json();
+      
+      console.log('Loaded orders:', list.length);
+      
+      // Hiển thị danh sách đơn hàng lên bảng
       renderOrders(list);
     }
 
+    // Hàm hiển thị danh sách đơn hàng lên bảng
     function renderOrders(list){
       const body = document.getElementById('orderBody');
-      body.innerHTML = '';
+      body.innerHTML = ''; // Xóa nội dung cũ
+      // Duyệt qua từng đơn hàng và tạo dòng trong bảng
       list.forEach(o=>{
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -107,29 +132,70 @@
         body.appendChild(tr);
       });
       
+      // Gắn sự kiện click cho các nút "Cập nhật"
       body.querySelectorAll('[data-action="edit"]').forEach(btn=>{
         btn.addEventListener('click', async function(){
+          // Lấy ID đơn hàng từ thuộc tính data-id
           const id = parseInt(this.dataset.id);
+          // Gọi API để lấy thông tin chi tiết đơn hàng
           const res = await fetch(`/admin/api/orders/${id}`);
           const o = await res.json();
+          // Điền thông tin vào form modal
           oId.value = 'ORD-' + String(o.id).padStart(3, '0');
           oStatus.value = o.status.toLowerCase();
+          // Hiển thị modal
           new bootstrap.Modal(modalOrder).show();
+          // Xử lý khi nhấn nút Lưu
           btnSaveOrder.onclick = async ()=>{ 
-            await fetch(`/admin/api/orders/${id}/status`, {
-              method: 'PUT',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify(oStatus.value.toUpperCase())
-            });
-            bootstrap.Modal.getInstance(modalOrder).hide();
-            loadOrders();
+            try {
+              const newStatus = oStatus.value.toUpperCase();
+              console.log('=== UPDATING ORDER ===');
+              console.log('Order ID:', id);
+              console.log('New Status:', newStatus);
+              
+              // Gọi API để cập nhật trạng thái đơn hàng
+              const response = await fetch(`/admin/api/orders/${id}/status`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(newStatus) // Gửi trạng thái dạng chữ hoa
+              });
+              
+              console.log('Response status:', response.status);
+              
+              // Kiểm tra response thành công
+              if (response.ok) {
+                const updatedOrder = await response.json();
+                console.log('Updated order:', updatedOrder);
+                console.log('New status from server:', updatedOrder.status);
+                
+                // Đóng modal
+                bootstrap.Modal.getInstance(modalOrder).hide();
+                
+                // Đợi 500ms để đảm bảo database đã commit
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Tải lại danh sách đơn hàng để cập nhật giao diện
+                console.log('Reloading orders...');
+                await loadOrders();
+                console.log('Orders reloaded!');
+              } else {
+                const errorText = await response.text();
+                console.error('Error response:', errorText);
+                alert('Có lỗi xảy ra khi cập nhật trạng thái!');
+              }
+            } catch (error) {
+              console.error('Lỗi:', error);
+              alert('Có lỗi xảy ra: ' + error.message);
+            }
           };
         });
       });
     }
     
+    // Hàm chuyển đổi trạng thái thành badge HTML
     function labelStatus(st){
       const s = (st||'').toLowerCase();
+      // Map trạng thái với màu sắc tương ứng
       const map={
         pending:'<span class="badge bg-warning text-dark">Chờ xác nhận</span>', 
         shipping:'<span class="badge bg-info text-dark">Đang giao</span>', 
@@ -139,8 +205,11 @@
       return map[s]||st;
     }
 
+    // Khởi tạo khi trang đã load xong
     document.addEventListener('DOMContentLoaded', function(){
+      // Gắn sự kiện thay đổi cho bộ lọc trạng thái
       statusFilter.addEventListener('change', loadOrders);
+      // Tải danh sách đơn hàng lần đầu
       loadOrders();
     });
   </script>

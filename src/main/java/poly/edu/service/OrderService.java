@@ -85,38 +85,58 @@ public class OrderService {
     }
 
 
+    // Lấy tất cả đơn hàng từ database
+    // Trả về danh sách OrderDTO
     public List<OrderDTO> getAllOrders() {
         return orderRepository.findAll().stream()
-                .map(this::convertToDTO)
+                .map(this::convertToDTO) // Chuyển đổi từ Entity sang DTO
                 .collect(Collectors.toList());
     }
 
+    // Lấy danh sách đơn hàng theo trạng thái
+    // Nếu status null hoặc rỗng thì trả về tất cả đơn hàng
     public List<OrderDTO> getOrdersByStatus(String status) {
         if (status == null || status.trim().isEmpty()) {
             return getAllOrders();
         }
+        // Tìm đơn hàng theo trạng thái (chuyển sang chữ hoa để đồng nhất)
         return orderRepository.findByStatus(status.toUpperCase()).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
+    // Lấy thông tin đơn hàng theo ID
+    // Trả về null nếu không tìm thấy
     public OrderDTO getOrderById(Integer id) {
         return orderRepository.findById(id)
                 .map(this::convertToDTO)
                 .orElse(null);
     }
 
+    // Cập nhật trạng thái đơn hàng
+    // @Transactional đảm bảo tính toàn vẹn dữ liệu khi cập nhật
     @Transactional
     public OrderDTO updateOrderStatus(Integer id, String status) {
+        // Tìm đơn hàng theo ID
         Order order = orderRepository.findById(id).orElse(null);
-        if (order == null) return null;
+        if (order == null) return null; // Trả về null nếu không tìm thấy
         
-        order.setStatus(status.toUpperCase());
-        return convertToDTO(orderRepository.save(order));
+        // Cập nhật trạng thái (chuyển sang chữ hoa để đồng nhất)
+        String newStatus = status.toUpperCase().trim();
+        order.setStatus(newStatus);
+        
+        // Lưu và flush ngay vào database
+        Order savedOrder = orderRepository.saveAndFlush(order);
+        
+        // Trả về DTO với status mới
+        return convertToDTO(savedOrder);
     }
 
+    // Chuyển đổi từ Order Entity sang OrderDTO
+    // DTO (Data Transfer Object) dùng để truyền dữ liệu giữa các layer
     private OrderDTO convertToDTO(Order order) {
         OrderDTO dto = new OrderDTO();
+        // Map các thuộc tính cơ bản
         dto.setId(order.getId());
         dto.setOrderDate(order.getOrderDate());
         dto.setStatus(order.getStatus());
@@ -124,6 +144,7 @@ public class OrderService {
         dto.setReceiverName(order.getReceiverName());
         dto.setReceiverPhone(order.getReceiverPhone());
         dto.setReceiverAddress(order.getReceiverAddress());
+        // Map thông tin khách hàng nếu có
         if (order.getAccount() != null) {
             dto.setAccountId(order.getAccount().getId());
             dto.setCustomerName(order.getAccount().getFullName());

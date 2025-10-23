@@ -35,6 +35,11 @@ public class PageController {
         return "pages/home";
     }
 
+    @GetMapping("/product-list")
+    public String productList() {
+        return "pages/product-list";
+    }
+    
     @GetMapping("/product-detail")
     public String productDetail() {
         return "pages/product-detail";
@@ -81,11 +86,13 @@ public class PageController {
         return "pages/order-detail";
     }
 
+    // Hiển thị trang sản phẩm đã mua (chỉ lấy đơn hàng COMPLETED)
     @GetMapping("/my-product-list")
     public String myProductList(Model model) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth != null ? auth.getName() : null;
-        List<String> statuses = Arrays.asList("COMPLETED", "HOAN_THANH", "HOAN THANH", "DONE");
+        // Chỉ lấy đơn hàng có trạng thái COMPLETED
+        List<String> statuses = Arrays.asList("COMPLETED");
         List<PurchasedItem> items = email == null ? List.of() : orderDetailRepository.findPurchasedItems(email, statuses);
         model.addAttribute("purchasedItems", items);
         return "pages/my-product-list";

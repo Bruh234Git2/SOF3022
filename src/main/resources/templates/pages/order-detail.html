@@ -13,8 +13,18 @@
   <main class="py-4">
     <div class="container">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3 class="mb-0">Đơn hàng #ORD-202509-001</h3>
-        <span class="badge bg-success">Hoàn thành</span>
+        <!-- Hiển thị mã đơn hàng động -->
+        <h3 class="mb-0" th:text="'Đơn hàng #ORD-' + ${order.id}">Đơn hàng #ORD-1</h3>
+        <!-- Hiển thị trạng thái động với màu sắc tương ứng -->
+        <span class="badge"
+              th:classappend="${order.status == 'COMPLETED'} ? 'bg-success' :
+                              (${order.status == 'SHIPPING'} ? 'bg-info text-dark' :
+                              (${order.status == 'PENDING'} ? 'bg-warning text-dark' : 'bg-secondary'))"
+              th:text="${order.status == 'COMPLETED'} ? 'Hoàn thành' :
+                       (${order.status == 'SHIPPING'} ? 'Đang giao' :
+                       (${order.status == 'PENDING'} ? 'Chờ xác nhận' : 'Đã hủy'))">
+          Hoàn thành
+        </span>
       </div>
 
       <div class="row g-4">
@@ -38,8 +48,8 @@
       <div class="d-flex align-items-center gap-3">
         <img th:src="${detail.product.image}" width="60" height="60" class="rounded" style="object-fit:cover">
         <div>
-          <div class="fw-semibold" th:text="${detail.product.name}">Tên sản phẩm</div>
-          <div class="text-muted small" th:text="'SKU: ' + ${detail.product.sku}">SKU</div>
+			<div class="text-muted small" th:text="'SKU: ' + ${detail.product.sku}">SKU</div>
+			<div class="fw-semibold" th:text="${detail.product.name}">Tên sản phẩm</div>
         </div>
       </div>
     </td>
@@ -55,26 +65,44 @@
           </div>
         </div>
         <div class="col-lg-4">
-          <div class="card mb-3">
-            <div class="card-body">
-              <h5 class="card-title">Tổng cộng</h5>
-              <div class="d-flex justify-content-between"><span>Tạm tính</span><strong>947.000 đ</strong></div>
-              <div class="d-flex justify-content-between"><span>Giảm giá</span><strong class="text-success">-50.000 đ</strong></div>
-              <div class="d-flex justify-content-between"><span>Phí vận chuyển</span><strong>30.000 đ</strong></div>
-              <div class="d-flex justify-content-between border-top pt-2 mt-2">
-                <span>Thành tiền</span><strong class="fs-5">927.000 đ</strong>
-              </div>
-            </div>
+			<div class="card mb-3"
+			     th:with="subtotal = ${#aggregates.sum(details.![price * quantity])}, shippingFee = 30000">
+			    <div class="card-body">
+			        <h5 class="card-title">Tổng cộng</h5>
+			        
+			        <div class="d-flex justify-content-between">
+			            <span>Tạm tính</span>
+			            <strong th:text="${#numbers.formatDecimal(subtotal, 0, 'POINT', 0, 'POINT')} + ' đ'">0 đ</strong>
+			        </div>
+
+			        <div class="d-flex justify-content-between">
+			            <span>Giảm giá</span>
+			            <strong class="text-success" th:text="'-' + ${#numbers.formatDecimal(subtotal + shippingFee - order.totalAmount, 0, 'POINT', 0, 'POINT')} + ' đ'">-0 đ</strong>
+			        </div>
+
+			        <div class="d-flex justify-content-between">
+			            <span>Phí vận chuyển</span>
+			            <strong th:text="${#numbers.formatDecimal(shippingFee, 0, 'POINT', 0, 'POINT')} + ' đ'">0 đ</strong>
+			        </div>
+
+			        <div class="d-flex justify-content-between border-top pt-2 mt-2">
+			            <span>Thành tiền</span>
+			            <strong class="fs-5" th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'POINT', 0, 'POINT')} + ' đ'">0 đ</strong>
+			        </div>
+			    </div>
+			</div>
           </div>
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">Thông tin giao hàng</h5>
-              <div class="small text-muted">Nguyễn Văn A</div>
-              <div class="small text-muted">09xx xxx xxx</div>
-              <div class="small text-muted">you@example.com</div>
-              <div class="small text-muted">123 Trần Duy Hưng, Cầu Giấy, Hà Nội</div>
-            </div>
-          </div>
+		  <div class="card">
+		      <div class="card-body">
+		          <h5 class="card-title">Thông tin giao hàng</h5>
+		          <div class="small text-muted" th:text="${order.receiverName}">Tên người nhận</div>
+		          <div class="small text-muted" th:text="${order.receiverPhone}">Số điện thoại</div>
+		          
+		          <div class="small text-muted" th:text="${order.account.email}">Email người đặt</div>
+		          
+		          <div class="small text-muted" th:text="${order.receiverAddress}">Địa chỉ giao hàng</div>
+		      </div>
+		  </div>
         </div>
       </div>
 
