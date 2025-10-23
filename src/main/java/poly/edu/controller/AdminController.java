@@ -116,11 +116,31 @@ public class AdminController {
         return order != null ? ResponseEntity.ok(order) : ResponseEntity.notFound().build();
     }
 
+    // Cập nhật trạng thái đơn hàng
+    // @PathVariable id: ID của đơn hàng cần cập nhật
+    // @RequestBody status: Trạng thái mới (JSON string từ frontend)
     @PutMapping("/api/orders/{id}/status")
     @ResponseBody
     public ResponseEntity<OrderDTO> updateOrderStatus(@PathVariable Integer id, @RequestBody String status) {
-        OrderDTO updated = orderService.updateOrderStatus(id, status);
-        return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
+        // Log để debug
+        System.out.println("=== UPDATE ORDER STATUS ===");
+        System.out.println("Order ID: " + id);
+        System.out.println("Status received: [" + status + "]");
+        
+        // Loại bỏ dấu ngoặc kép nếu có (do JSON.stringify từ frontend)
+        String cleanStatus = status.replaceAll("\"", "").trim();
+        System.out.println("Status cleaned: [" + cleanStatus + "]");
+        
+        // Cập nhật trạng thái
+        OrderDTO updated = orderService.updateOrderStatus(id, cleanStatus);
+        
+        if (updated != null) {
+            System.out.println("Status updated successfully to: " + updated.getStatus());
+            return ResponseEntity.ok(updated);
+        } else {
+            System.out.println("Order not found!");
+            return ResponseEntity.notFound().build();
+        }
     }
 
     // ==================== ACCOUNT ENDPOINTS ====================

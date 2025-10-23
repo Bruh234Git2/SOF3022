@@ -55,9 +55,15 @@
                   <label class="form-label">Địa chỉ</label>
                   <input type="text" class="form-control" th:field="*{address}" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành">
                 </div>
-                <div class="col-12">
-                  <button type="submit" class="btn btn-dark">Lưu thay đổi</button>
-                </div>
+				<div class="col-12">
+				    <div class="d-flex gap-2">
+				        <button type="submit" class="btn btn-dark">Lưu thay đổi</button>
+				        
+						<a th:href="@{/account/change-password}" class="btn btn-outline-secondary">
+						            Đổi mật khẩu
+						</a>
+				    </div>
+				</div>
               </div>
             </form>
           </div>

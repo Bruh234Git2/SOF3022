@@ -31,11 +31,14 @@
     <td th:text="'#ORD-' + ${order.id}">ORD-0001</td>
     <td th:text="${#temporals.format(order.orderDate, 'dd/MM/yyyy')}">30/09/2025</td>
     <td>
+      <!-- Hiển thị trạng thái đơn hàng với màu sắc và text tiếng Việt -->
       <span class="badge"
             th:classappend="${order.status == 'COMPLETED'} ? 'bg-success' :
-                            (${order.status == 'SHIPPING'} ? 'bg-warning text-dark' :
-                            (${order.status == 'PENDING'} ? 'bg-secondary' : 'bg-danger'))"
-            th:text="${order.status}">
+                            (${order.status == 'SHIPPING'} ? 'bg-info text-dark' :
+                            (${order.status == 'PENDING'} ? 'bg-warning text-dark' : 'bg-secondary'))"
+            th:text="${order.status == 'COMPLETED'} ? 'Hoàn thành' :
+                     (${order.status == 'SHIPPING'} ? 'Đang giao' :
+                     (${order.status == 'PENDING'} ? 'Chờ xác nhận' : 'Đã hủy'))">
         Hoàn thành
       </span>
     </td>
