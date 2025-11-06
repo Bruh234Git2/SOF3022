@@ -44,30 +44,12 @@
 
           <li class="nav-item position-relative">
             <a class="nav-link" th:href="@{/pages/cart}">Giỏ hàng
-              <span id="cartCountBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" style="display:none">0</span>
+              <span th:if="${cartCount > 0}" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" th:text="${cartCount}">0</span>
             </a>
           </li>
         </ul>
       </div>
     </div>
   </nav>
-  <script>
-    // Chỉ giữ lại cập nhật badge giỏ hàng theo localStorage (phần còn lại do Spring Security xử lý)
-    document.addEventListener('DOMContentLoaded', function(){
-      const badge = document.getElementById('cartCountBadge');
-      const updateBadge = () => {
-        try{
-          const cart = JSON.parse(localStorage.getItem('cart')||'[]');
-          const count = cart.reduce((s,i)=>s + (parseInt(i.qty||1)||1), 0);
-          if(badge){
-            if(count>0){ badge.style.display='inline-block'; badge.textContent = count; }
-            else{ badge.style.display='none'; }
-          }
-        }catch(e){}
-      };
-      updateBadge();
-      window.addEventListener('storage', updateBadge);
-    });
-  </script>
 </body>
 </html>
