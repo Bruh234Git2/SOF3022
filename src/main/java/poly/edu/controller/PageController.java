@@ -46,7 +46,9 @@ public class PageController {
     }
 
     @GetMapping("/cart")
-    public String cart() {
+    public String cart(Model model) {
+        // Cart items sẽ được hiển thị qua AJAX hoặc có thể inject trực tiếp
+        // Để đơn giản, page sẽ load data qua AJAX từ /api/cart/items
         return "pages/cart";
     }
 

@@ -13,4 +13,6 @@ public class ProductDTO {
     private String description;
     private Integer categoryId;
     private String categoryName;
+    private String sku;
+    private String gender; // Nam, Nữ, Unisex
 }

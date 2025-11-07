@@ -27,8 +27,11 @@ public class Product {
     @Column(length = 255)
     private String image;
     
-    @Column(name = "sku", length = 50) // Thêm annotation
-    private String sku; // Thêm thuộc tính này
+    @Column(name = "sku", length = 50)
+    private String sku;
+
+    @Column(name = "gender", length = 10)
+    private String gender; // Nam, Nữ, Unisex
 
     @Lob
     private String description;

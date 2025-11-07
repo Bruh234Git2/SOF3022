@@ -89,7 +89,7 @@
         <ul class="pagination justify-content-center">
           <!-- Prev -->
           <li class="page-item" th:if="${!page.first}">
-            <a class="page-link" th:href="@{/products(page=${curr-1},size=${params['size']},sort=${params['sort']},q=${params['q']},category=${params['category']},min=${params['min']},max=${params['max']},sale=${params['sale']})}">Trước</a>
+            <a class="page-link" th:href="@{/products(page=${curr-1},size=${params['size']},sort=${params['sort']},q=${params['q']},category=${params['category']},gender=${params['gender']},min=${params['min']},max=${params['max']},sale=${params['sale']})}">Trước</a>
           </li>
           <li class="page-item disabled" th:if="${page.first}"><span class="page-link">Trước</span></li>
 
@@ -99,14 +99,14 @@
               th:classappend="${i==curr} ? 'active'"
               th:if="${start > 0}">
             <a class="page-link" th:text="${i+1}"
-               th:href="@{/products(page=${i},size=${params['size']},sort=${params['sort']},q=${params['q']},category=${params['category']},min=${params['min']},max=${params['max']},sale=${params['sale']})}">1</a>
+               th:href="@{/products(page=${i},size=${params['size']},sort=${params['sort']},q=${params['q']},category=${params['category']},gender=${params['gender']},min=${params['min']},max=${params['max']},sale=${params['sale']})}">1</a>
           </li>
           <li class="page-item disabled" th:if="${start > 3}"><span class="page-link">…</span></li>
 
           <!-- Middle window -->
           <li class="page-item" th:each="i : ${#numbers.sequence(start, end)}" th:classappend="${i==curr} ? 'active'">
             <a class="page-link" th:text="${i+1}"
-               th:href="@{/products(page=${i},size=${params['size']},sort=${params['sort']},q=${params['q']},category=${params['category']},min=${params['min']},max=${params['max']},sale=${params['sale']})}">1</a>
+               th:href="@{/products(page=${i},size=${params['size']},sort=${params['sort']},q=${params['q']},category=${params['category']},gender=${params['gender']},min=${params['min']},max=${params['max']},sale=${params['sale']})}">1</a>
           </li>
 
           <!-- Last 3 pages -->
@@ -116,61 +116,17 @@
               th:if="${end < total-1}"
               th:classappend="${i==curr} ? 'active'">
             <a class="page-link" th:text="${i+1}"
-               th:href="@{/products(page=${i},size=${params['size']},sort=${params['sort']},q=${params['q']},category=${params['category']},min=${params['min']},max=${params['max']},sale=${params['sale']})}">1</a>
+               th:href="@{/products(page=${i},size=${params['size']},sort=${params['sort']},q=${params['q']},category=${params['category']},gender=${params['gender']},min=${params['min']},max=${params['max']},sale=${params['sale']})}">1</a>
           </li>
 
           <!-- Next -->
           <li class="page-item" th:if="${!page.last}">
-            <a class="page-link" th:href="@{/products(page=${curr+1},size=${params['size']},sort=${params['sort']},q=${params['q']},category=${params['category']},min=${params['min']},max=${params['max']},sale=${params['sale']})}">Sau</a>
+            <a class="page-link" th:href="@{/products(page=${curr+1},size=${params['size']},sort=${params['sort']},q=${params['q']},category=${params['category']},gender=${params['gender']},min=${params['min']},max=${params['max']},sale=${params['sale']})}">Sau</a>
           </li>
           <li class="page-item disabled" th:if="${page.last}"><span class="page-link">Sau</span></li>
         </ul>
       </nav>
     </div>
-
-  <script>
-    // Simple add-to-cart using localStorage
-    (function(){
-      function updateBadge(){
-        const badge = document.getElementById('cartCountBadge');
-        try{
-          const cart = JSON.parse(localStorage.getItem('cart')||'[]');
-          const count = cart.reduce((s,i)=>s+(parseInt(i.qty||1)||1),0);
-          if(badge){
-            if(count>0){ badge.style.display='inline-block'; badge.textContent = count; }
-            else { badge.style.display='none'; }
-          }
-        }catch(e){}
-      }
-      function addItem(data){
-        const cart = JSON.parse(localStorage.getItem('cart')||'[]');
-        const idx = cart.findIndex(x=>x.id===data.id);
-        if(idx>-1){ cart[idx].qty = (parseInt(cart[idx].qty||1)||1) + 1; }
-        else { cart.push({id:data.id, title:data.title, price:data.price, img:data.img, qty:1}); }
-        localStorage.setItem('cart', JSON.stringify(cart));
-        updateBadge();
-      }
-      document.querySelectorAll('.add-to-cart').forEach(btn=>{
-        btn.addEventListener('click', function(){
-          const d = this.dataset;
-          addItem({id:d.id, title:d.title, price:parseInt(d.price), img:d.img});
-          this.classList.add('btn-success');
-          this.textContent = '✓';
-          setTimeout(()=>{ this.classList.remove('btn-success'); this.textContent = '+'; }, 800);
-        });
-      });
-      // Navigate to product-detail with query params
-      document.querySelectorAll('.to-detail').forEach(a=>{
-        a.addEventListener('click', function(e){
-          e.preventDefault();
-          const d = this.dataset;
-          const qs = new URLSearchParams({id:d.id, title:d.title, price:d.price, img:d.img});
-          window.location.href = '/pages/product-detail?' + qs.toString();
-        });
-      });
-      updateBadge();
-    })();
-  </script>
   </article>
 </body>
 </html>
