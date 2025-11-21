@@ -75,29 +75,59 @@
       </div>
     </div>
 	<script>
+	    const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+	    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+	    
 	    function vnd(n){ try{ return new Intl.NumberFormat('vi-VN').format(n)+' đ'; }catch(e){ return n+' đ'; } }
-	    function loadCart(){ try{ return JSON.parse(localStorage.getItem('cart')||'[]'); }catch(e){ return []; } }
-	    function renderCheckout(){
+	    
+	    // Load cart từ backend API
+	    async function loadCart(){
+	      try{
+	        const headers = {};
+	        if (csrfHeader && csrfToken) {
+	          headers[csrfHeader] = csrfToken;
+	        }
+	        const res = await fetch('/api/cart/items', { headers });
+	        if(!res.ok) return [];
+	        return await res.json();
+	      }catch(e){ console.error(e); return []; }
+	    }
+	    
+	    async function renderCheckout(){
 	      const wrap = document.getElementById('orderItems');
-	      const items = loadCart();
+	      const items = await loadCart();
 	      wrap.innerHTML = '';
-	      items.forEach(it=>{
-	        const row = document.createElement('div');
-	        row.className = 'd-flex align-items-center justify-content-between mb-2';
-	        row.innerHTML = `
-	          <div class="d-flex align-items-center gap-2">
-	            <img src="${it.img}" width="54" height="54" class="rounded" style="object-fit:cover" alt="img">
-	            <div>
-	              <div class="small">${it.title} x${it.qty||1}</div>
-	              <div class="text-muted small">${it.color?`Màu: ${it.color} • `:''}${it.size?`Size: ${it.size}`:''}</div>
-	              <div class="text-muted small">${vnd(it.price)}</div>
+	    
+	      if(items.length === 0){
+	        wrap.innerHTML = '<div class="text-muted small">Giỏ hàng trống</div>';
+	      } else {
+	        items.forEach(item => {
+	          const prod = item.product || {};
+	          const qty = item.quantity || 1;
+	          const price = prod.salePrice || 0;
+	          const row = document.createElement('div');
+	          row.className = 'd-flex align-items-center justify-content-between mb-2';
+	          row.innerHTML = `
+	            <div class="d-flex align-items-center gap-2">
+	              <img src="${prod.image || '/images/placeholder.svg'}" width="54" height="54" class="rounded" style="object-fit:cover" alt="img" onerror="this.src='/images/placeholder.svg'">
+	              <div>
+	                <div class="small">${prod.name || 'Sản phẩm'} x${qty}</div>
+	                <div class="text-muted small">${item.color ? `Màu: ${item.color} • ` : ''}${item.size ? `Size: ${item.size}` : ''}</div>
+	                <div class="text-muted small">${vnd(price)}</div>
+	              </div>
 	            </div>
-	          </div>
-	          <span>${vnd((it.price||0) * (it.qty||1))}</span>
-	        `;
-	        wrap.appendChild(row);
-	      });
-	      const subtotal = items.reduce((s,i)=> s + (i.price||0) * (parseInt(i.qty||1)||1), 0);
+	            <span>${vnd(price * qty)}</span>
+	          `;
+	          wrap.appendChild(row);
+	        });
+	      }
+	    
+	      const subtotal = items.reduce((s, item) => {
+	        const prod = item.product || {};
+	        const price = prod.salePrice || 0;
+	        const qty = item.quantity || 1;
+	        return s + (price * qty);
+	      }, 0);
 	      const discount = 0; // demo
 	      const shipping = subtotal>0 ? 30000 : 0;
 	      const total = subtotal - discount + shipping;
@@ -107,78 +137,87 @@
 	      document.getElementById('ckTotal').textContent = vnd(total);
 	    }
 	    
-		document.addEventListener('DOMContentLoaded', function(){
+	    document.addEventListener('DOMContentLoaded', function(){
 	      renderCheckout();
 	      
 	      const btn = document.getElementById('btnPlaceOrder');
 	      const form = document.getElementById('checkoutForm');
-
+	    
 	      if(btn){
-	        btn.addEventListener('click', function(){
+	        btn.addEventListener('click', async function(){
 	          
 	          // 1. Lấy form và kiểm tra validation
 	          if (!form.checkValidity()) {
 	            form.reportValidity();
 	            return;
 	          }
-
+	    
 	          const shippingInfo = Object.fromEntries(new FormData(form).entries());
-	          const cartItems = loadCart();
-
-	          if (cartItems.length === 0) {
+	          const cartEntities = await loadCart();
+	    
+	          if (cartEntities.length === 0) {
 	            alert('Giỏ hàng của bạn đang trống!');
 	            return;
 	          }
-
+	    
+	          const cartItems = cartEntities
+	            .map(it => ({
+	              productId: it.product?.id,
+	              qty: it.quantity || 1,
+	              color: it.color,
+	              size: it.size
+	            }))
+	            .filter(it => it.productId);
+	    
+	          if (cartItems.length === 0) {
+	            alert('Không tìm thấy sản phẩm hợp lệ trong giỏ hàng!');
+	            return;
+	          }
+	    
 	          const payload = {
 	            shippingInfo: shippingInfo,
 	            cartItems: cartItems 
 	          };
-
+	    
 			  btn.disabled = true;
 			  btn.textContent = 'Đang xử lý...';
-
-			  const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-			  const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-
+	    
+			  const token = csrfToken;
+			  const header = csrfHeader;
+	    
+			  const headers = { 'Content-Type': 'application/json' };
+			  if (header && token) {
+			    headers[header] = token;
+			  }
+	    
 			  fetch('/orders/place', {
 			    method: 'POST',
-			    headers: {
-			      'Content-Type': 'application/json',
-			      [header]: token
-			    },
+			    headers: headers,
 			    body: JSON.stringify(payload)
 			  })
 	          .then(response => {
-	            // 2. KIỂM TRA PHẢN HỒI (RẤT QUAN TRỌNG)
 	            if (response.ok) {
-	              return response.text(); // Thành công, đi tiếp
+	              return response.text();
 	            }
-	            // Nếu server báo lỗi (400, 500...), đọc lỗi và ném ra
 	            return response.text().then(text => { 
-	                throw new Error('Lỗi từ server: ' + text) 
+	                throw new Error('Lỗi từ server: ' + text); 
 	            });
 	          })
 			  .then(data => {
-	            // 3. XỬ LÝ THÀNH CÔNG (chỉ chạy khi response.ok)
 			    alert('Đặt hàng thành công!');
-			    localStorage.removeItem('cart');
 			    window.location.href = '/pages/thank-you';
 			  })
 			  .catch(error => {
-	            // 4. XỬ LÝ LỖI (lỗi mạng hoặc lỗi server)
 			    console.error('Lỗi đặt hàng:', error);
-			    // Hiển thị lỗi thực sự cho người dùng
 	            alert('Có lỗi xảy ra khi đặt hàng:\n' + error.message);
 			  })
 	          .finally(() => {
-	            // 5. LUÔN LUÔN CHẠY (reset lại nút)
 	            btn.disabled = false;
 	            btn.textContent = 'Đặt hàng';
 	          });
 	        });
 	      }
-		});
+	    });
 	  </script>
   </article>
 </body>

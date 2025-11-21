@@ -24,8 +24,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderService {
     private final OrderRepository orderRepository;
-    private final ProductRepository productRepository; // Thêm
-    private final OrderDetailRepository orderDetailRepository; // Thêm
+    private final ProductRepository productRepository; 
+    private final OrderDetailRepository orderDetailRepository; 
+    private final CartService cartService; // Thêm
 
     // Phí ship cố định (ví dụ)
     private static final BigDecimal SHIPPING_FEE = new BigDecimal("30000");
@@ -81,7 +82,12 @@ public class OrderService {
         order.setStatus("PENDING"); // Trạng thái chờ xử lý
 
         // 5. Lưu Order (và OrderDetail sẽ tự lưu nhờ Cascade)
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+        
+        // 6. Xóa toàn bộ giỏ hàng của user sau khi đặt hàng thành công
+        cartService.clearCart();
+        
+        return savedOrder;
     }
 
 
