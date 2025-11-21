@@ -25,6 +25,12 @@ public class Cart {
     @Column(nullable = false)
     private Integer quantity;
 
+    @Column(length = 50)
+    private String color; // Màu sắc sản phẩm
+
+    @Column(length = 50)
+    private String size; // Kích thước sản phẩm
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

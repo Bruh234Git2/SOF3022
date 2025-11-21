@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import poly.edu.entity.Account;
 import poly.edu.repository.AccountRepository;
+import poly.edu.service.CartService;
 
 import java.util.Optional;
 
@@ -15,9 +16,11 @@ import java.util.Optional;
 public class CurrentUserAdvice {
 
     private final AccountRepository accountRepository;
+    private final CartService cartService;
 
-    public CurrentUserAdvice(AccountRepository accountRepository) {
+    public CurrentUserAdvice(AccountRepository accountRepository, CartService cartService) {
         this.accountRepository = accountRepository;
+        this.cartService = cartService;
     }
 
     @ModelAttribute("currentAccount")
@@ -29,5 +32,14 @@ public class CurrentUserAdvice {
         String email = auth.getName();
         Optional<Account> acc = accountRepository.findByEmail(email);
         return acc.orElse(null);
+    }
+
+    @ModelAttribute("cartCount")
+    public int cartCount(){
+        try {
+            return cartService.getCartCount();
+        } catch (Exception e) {
+            return 0;
+        }
     }
 }

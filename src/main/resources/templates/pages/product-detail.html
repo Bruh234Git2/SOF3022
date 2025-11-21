@@ -47,9 +47,8 @@
           <div class="card mb-3 border-0">
             <div class="pd-aspect">
               <img id="mainImage" class="pd-main" alt="Ảnh sản phẩm" th:src="${#strings.isEmpty(product.image) ? '/images/placeholder.svg' : product.image}"
-                   onerror="this.onerror=null;this.src='/images/placeholder.svg';" th:data-id="${product.id}" th:data-title="${product.name}"
-                   th:data-price="${product.salePrice}" th:data-img="${#strings.isEmpty(product.image) ? '/images/placeholder.svg' : product.image}"
-                   width="800" height="800" fetchpriority="high" decoding="async" onclick="pdOpenLightbox()">
+                   onerror="this.onerror=null;this.src='/images/placeholder.svg';"
+                   width="800" height="800" fetchpriority="high" decoding="async">
             </div>
           </div>
           <div id="thumbRow" class="d-flex gap-2">
@@ -57,14 +56,12 @@
             <img th:src="${#strings.isEmpty(product.image) ? '/images/placeholder.svg' : product.image}"
                  class="pd-thumb rounded border active"
                  onerror="this.onerror=null;this.src='/images/placeholder.svg';"
-                 loading="lazy" decoding="async" width="200" height="200"
-                 onmouseenter="pdPreview(this)" onclick="pdOpenLightbox(this)">
+                 loading="lazy" decoding="async" width="200" height="200">
             <!-- Then the rest images -->
             <img th:if="${!#lists.isEmpty(images)}" th:each="img : ${images}" th:src="${img.imageUrl}"
                  class="pd-thumb rounded border"
                  onerror="this.onerror=null;this.src='/images/placeholder.svg';"
-                 loading="lazy" decoding="async" width="200" height="200"
-                 onmouseenter="pdPreview(this)" onclick="pdOpenLightbox(this)">
+                 loading="lazy" decoding="async" width="200" height="200">
           </div>
 
           <!-- Lightbox modal -->
@@ -122,33 +119,41 @@
                   th:text="${'-' + #numbers.formatDecimal(product.discount,0,0) + '%'}">-0%</span>
           </div>
 
-          <div class="mb-3">
-            <label class="form-label">Màu sắc</label>
-            <div id="colorGroup" class="d-flex gap-2">
-              <button class="btn btn-sm btn-outline-secondary" data-value="Trắng">Trắng</button>
-              <button class="btn btn-sm btn-outline-secondary" data-value="Xanh">Xanh</button>
-              <button class="btn btn-sm btn-outline-secondary" data-value="Hồng">Hồng</button>
+          <form th:action="@{/product/add-to-cart}" method="post">
+            <input type="hidden" name="productId" th:value="${product.id}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            
+            <div class="mb-3">
+              <label class="form-label">Màu sắc</label>
+              <div class="d-flex gap-2">
+                <input type="radio" class="btn-check" name="color" id="color1" value="Trắng" checked>
+                <label class="btn btn-sm btn-outline-secondary" for="color1">Trắng</label>
+                <input type="radio" class="btn-check" name="color" id="color2" value="Xanh">
+                <label class="btn btn-sm btn-outline-secondary" for="color2">Xanh</label>
+                <input type="radio" class="btn-check" name="color" id="color3" value="Hồng">
+                <label class="btn btn-sm btn-outline-secondary" for="color3">Hồng</label>
+              </div>
             </div>
-          </div>
 
-          <div class="mb-3">
-            <label class="form-label">Kích thước</label>
-            <div id="sizeGroup" class="d-flex gap-2">
-              <button class="btn btn-sm btn-outline-dark" data-value="S">S</button>
-              <button class="btn btn-sm btn-outline-dark" data-value="M">M</button>
-              <button class="btn btn-sm btn-outline-dark" data-value="L">L</button>
-              <button class="btn btn-sm btn-outline-dark" data-value="XL">XL</button>
+            <div class="mb-3">
+              <label class="form-label">Kích thước</label>
+              <div class="d-flex gap-2">
+                <input type="radio" class="btn-check" name="size" id="size1" value="S">
+                <label class="btn btn-sm btn-outline-dark" for="size1">S</label>
+                <input type="radio" class="btn-check" name="size" id="size2" value="M" checked>
+                <label class="btn btn-sm btn-outline-dark" for="size2">M</label>
+                <input type="radio" class="btn-check" name="size" id="size3" value="L">
+                <label class="btn btn-sm btn-outline-dark" for="size3">L</label>
+                <input type="radio" class="btn-check" name="size" id="size4" value="XL">
+                <label class="btn btn-sm btn-outline-dark" for="size4">XL</label>
+              </div>
             </div>
-          </div>
 
-          <div class="d-flex align-items-center gap-3 mb-4">
-            <div class="input-group" style="width:140px;">
-              <button class="btn btn-outline-secondary" type="button" onclick="chgQty(-1)">-</button>
-              <input id="qty" type="number" class="form-control text-center" value="1" min="1">
-              <button class="btn btn-outline-secondary" type="button" onclick="chgQty(1)">+</button>
+            <div class="d-flex align-items-center gap-3 mb-4">
+              <input type="number" name="qty" class="form-control" style="width:140px;" value="1" min="1">
+              <button type="submit" class="btn btn-dark">Thêm vào giỏ</button>
             </div>
-            <button id="btnAddToCart" type="button" class="btn btn-dark">Thêm vào giỏ</button>
-          </div>
+          </form>
 
           <div class="border-top pt-3">
             <h6>Mô tả</h6>
@@ -170,246 +175,6 @@
         <div class="text-muted" th:if="${#lists.isEmpty(reviews)}">Chưa có đánh giá.</div>
       </div>
     </div>
-  <script>
-    function swapImg(el){ // legacy
-      const main = document.getElementById('mainImage');
-      const tmp = main.src; main.src = el.src; el.src = tmp;
-    }
-    // Helpers to ensure hover/click works even if listeners fail
-    function pdThumbs(){ return Array.from(document.querySelectorAll('#thumbRow .pd-thumb')); }
-    function pdSetActive(i){
-      const arr = pdThumbs();
-      arr.forEach(x=>x.classList.remove('active'));
-      if(arr[i]) arr[i].classList.add('active');
-    }
-    function pdPreview(el){
-      const main = document.getElementById('mainImage');
-      main.src = el.src;
-      const idx = pdThumbs().indexOf(el);
-      if(idx>=0){ window.__pdIndex = idx; pdSetActive(idx); }
-    }
-    function pdOpenLightbox(el){
-      const arr = pdThumbs();
-      let idx = (typeof window.__pdIndex==='number') ? window.__pdIndex : 0;
-      if(el){ const j = arr.indexOf(el); if(j>=0) idx = j; }
-      if(!arr.length){ idx = 0; }
-      if(typeof window.__openLightbox==='function'){ window.__openLightbox(idx); }
-    }
-    function chgQty(delta){
-      const i = document.getElementById('qty');
-      const v = Math.max(1, (parseInt(i.value||'1')+delta));
-      i.value = v;
-    }
-    function addToCart(item){
-      try{
-        const cart = JSON.parse(localStorage.getItem('cart')||'[]');
-        const idx = cart.findIndex(x=>x.id===item.id);
-        if(idx>-1){ cart[idx].qty = (parseInt(cart[idx].qty||1)||1) + item.qty; }
-        else { cart.push(item); }
-        localStorage.setItem('cart', JSON.stringify(cart));
-        // update badge if present
-        const badge = document.getElementById('cartCountBadge');
-        if(badge){
-          const count = cart.reduce((s,i)=>s+(parseInt(i.qty||1)||1),0);
-          if(count>0){ badge.style.display='inline-block'; badge.textContent=count; } else { badge.style.display='none'; }
-        }
-      }catch(e){ console.warn(e); }
-    }
-    document.addEventListener('DOMContentLoaded', function(){
-      // Build product data from data-* of main image
-      const mainImg = document.getElementById('mainImage');
-      let product = {
-        id: mainImg?.dataset?.id,
-        title: mainImg?.dataset?.title,
-        price: parseInt(mainImg?.dataset?.price || '0') || 0,
-        img: mainImg?.dataset?.img || mainImg?.src || ''
-      };
-
-      // ===== Helpers: resize CDN images (Pexels/Unsplash) =====
-      function cdnResize(url, size){
-        try{
-          if(!url) return url;
-          const u = new URL(url, window.location.origin);
-          const w = size, h = size;
-          // images.pexels.com
-          if(u.hostname.includes('images.pexels.com')){
-            const qs = u.search ? u.search + '&' : '?';
-            return u.origin + u.pathname + qs + `auto=compress&cs=tinysrgb&w=${w}&h=${h}&fit=crop`;
-          }
-          // images.unsplash.com
-          if(u.hostname.includes('images.unsplash.com')){
-            const qs = u.search ? u.search + '&' : '?';
-            return u.origin + u.pathname + qs + `w=${w}&h=${h}&fit=crop&q=75`;
-          }
-          // source.unsplash.com - supports pattern /{w}x{h}/
-          if(u.hostname.includes('source.unsplash.com')){
-            return url.replace(/\/(\d+|auto)x(\d+|auto)\//, `/${w}x${h}/`);
-          }
-          return url;
-        }catch{ return url; }
-      }
-      // Cache RAW sources to tránh chồng tham số khi resize
-      const pageThumbEls = Array.from(document.querySelectorAll('#thumbRow .pd-thumb'));
-      const rawMainSrc = mainImg?.getAttribute('src') || '';
-      const rawThumbSrcs = pageThumbEls.map(im => im.getAttribute('src'));
-
-      // Safe setter: chỉ đổi khi load OK, nếu lỗi thì fallback placeholder
-      const PLACEHOLDER = '/images/placeholder.svg';
-      function safeSetSrc(imgEl, url){
-        if(!imgEl) return;
-        const tmp = new Image();
-        tmp.onload = ()=>{ imgEl.src = url; };
-        tmp.onerror = ()=>{ imgEl.src = PLACEHOLDER; };
-        tmp.src = url;
-      }
-
-      // apply resize to main and page thumbs from RAW
-      if(mainImg && rawMainSrc) safeSetSrc(mainImg, cdnResize(rawMainSrc, 800));
-      pageThumbEls.forEach((im,idx)=>{ safeSetSrc(im, cdnResize(rawThumbSrcs[idx], 200)); });
-
-      // ===== Gallery interactions =====
-      const thumbs = Array.from(document.querySelectorAll('#thumbRow .pd-thumb'));
-      let currentIndex = 0;
-      // init active thumb
-      thumbs.forEach((t,i)=>{ if(t.classList.contains('active')) currentIndex=i; });
-      window.__pdIndex = currentIndex;
-
-      // hover: preview
-      thumbs.forEach((t,i)=>{
-        t.addEventListener('mouseenter', ()=>{
-          document.querySelectorAll('#thumbRow .pd-thumb').forEach(x=>x.classList.remove('active'));
-          t.classList.add('active');
-          const raw = rawThumbSrcs[i] || t.getAttribute('src');
-          safeSetSrc(mainImg, cdnResize(raw, 800));
-          currentIndex = i;
-          window.__pdIndex = currentIndex;
-        });
-        // click: open lightbox
-        t.addEventListener('click', ()=> openLightbox(i));
-      });
-
-      // click on main image opens lightbox
-      if(mainImg){ mainImg.addEventListener('click', ()=> openLightbox(currentIndex)); }
-
-      // Lightbox functions (Bootstrap or custom overlay fallback)
-      const lb = document.getElementById('imgLightbox');
-      const lbImg = document.getElementById('lightboxImg');
-      const btnPrev = document.getElementById('btnPrev');
-      const btnNext = document.getElementById('btnNext');
-      const hasBootstrap = !!(window.bootstrap && bootstrap.Modal);
-      // overlay fallback refs
-      const ov = document.getElementById('pdOverlay');
-      const ovImg = document.getElementById('ovImg');
-      const ovPrev = document.getElementById('ovPrev');
-      const ovNext = document.getElementById('ovNext');
-      const ovClose = document.getElementById('ovClose');
-      const lbThumbsBox = document.getElementById('lbThumbs');
-      const ovThumbsBox = document.getElementById('ovThumbs');
-
-      // Build thumbs in modal/overlay once
-      function buildThumbGrid(container){
-        if(!container) return;
-        container.innerHTML = '';
-        const arrRaw = rawThumbSrcs.length? rawThumbSrcs : [rawMainSrc];
-        arrRaw.forEach((raw,i)=>{
-          const im = document.createElement('img');
-          im.src = cdnResize(raw, 200); im.loading = 'lazy'; im.decoding='async';
-          im.width=160; im.height=160; im.className='pd-modal-thumb'+(i===currentIndex?' active':'');
-          im.addEventListener('click', ()=>{ showAt(i); syncThumbGrids(); });
-          container.appendChild(im);
-        });
-      }
-      function syncThumbGrids(){
-        [lbThumbsBox, ovThumbsBox].forEach(box=>{
-          if(!box) return; const nodes = box.querySelectorAll('.pd-modal-thumb');
-          nodes.forEach((n,idx)=>{ n.classList.toggle('active', idx===currentIndex); });
-        });
-      }
-      buildThumbGrid(lbThumbsBox); buildThumbGrid(ovThumbsBox);
-
-      // Preload neighbor images to make navigation faster
-      function preloadNeighbors(){
-        const srcs = (rawThumbSrcs.length? rawThumbSrcs : [rawMainSrc]).map(s=> cdnResize(s, 800));
-        if(!srcs.length) return;
-        const prev = srcs[(currentIndex-1+srcs.length)%srcs.length];
-        const next = srcs[(currentIndex+1)%srcs.length];
-        [prev,next].forEach(s=>{ const img = new Image(); img.src = s; });
-      }
-      function showAt(i){
-        const raws = rawThumbSrcs.length? rawThumbSrcs : [rawMainSrc];
-        const raw = raws[(i+raws.length)%raws.length] || rawMainSrc;
-        const src = cdnResize(raw, 800);
-        currentIndex = (i+thumbs.length)%thumbs.length;
-        if(hasBootstrap){ safeSetSrc(lbImg, src); } else { safeSetSrc(ovImg, src); }
-        syncThumbGrids();
-        preloadNeighbors();
-      }
-      function openLightbox(i){
-        showAt(i);
-        if(hasBootstrap){
-          const modal = bootstrap.Modal.getOrCreateInstance(lb);
-          modal.show();
-        } else {
-          ov.classList.add('show');
-        }
-      }
-      // expose for inline handler
-      window.__openLightbox = openLightbox;
-      // nav buttons
-      if(btnPrev) btnPrev.addEventListener('click', ()=> showAt(currentIndex-1));
-      if(btnNext) btnNext.addEventListener('click', ()=> showAt(currentIndex+1));
-      if(ovPrev) ovPrev.addEventListener('click', ()=> showAt(currentIndex-1));
-      if(ovNext) ovNext.addEventListener('click', ()=> showAt(currentIndex+1));
-      if(ovClose) ovClose.addEventListener('click', ()=> ov.classList.remove('show'));
-      // close when click outside image
-      if(ov) ov.addEventListener('click', (e)=>{ if(e.target===ov) ov.classList.remove('show'); });
-      // ESC / Arrow keys
-      document.addEventListener('keydown', (e)=>{
-        const isOpen = (hasBootstrap && document.body.classList.contains('modal-open')) || (ov && ov.classList.contains('show'));
-        if(!isOpen) return;
-        if(e.key==='Escape'){
-          if(hasBootstrap){ try{ bootstrap.Modal.getInstance(lb)?.hide(); }catch{} } else { ov.classList.remove('show'); }
-        } else if(e.key==='ArrowLeft'){
-          showAt(currentIndex-1);
-        } else if(e.key==='ArrowRight'){
-          showAt(currentIndex+1);
-        }
-      });
-
-      // chọn màu/size có trạng thái active
-      function bindToggle(groupId, activeClass){
-        const g = document.getElementById(groupId);
-        if(!g) return;
-        g.querySelectorAll('button').forEach(btn=>{
-          btn.addEventListener('click', function(){
-            g.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
-            this.classList.add('active');
-          });
-        });
-      }
-      bindToggle('colorGroup');
-      bindToggle('sizeGroup');
-
-      const btn = document.getElementById('btnAddToCart');
-      if(btn){
-        btn.addEventListener('click', function(){
-          const qty = Math.max(1, parseInt(document.getElementById('qty').value||'1'));
-          // lấy dữ liệu đã parse từ query hoặc UI
-          const title = product.title || (document.querySelector('h2.fw-bold')?.textContent?.trim() || 'Sản phẩm');
-          const img = product.img || (document.getElementById('mainImage')?.src || '');
-          const price = product.price || 0;
-          const id = product.id || '0';
-          const color = document.querySelector('#colorGroup .active')?.dataset?.value || 'Default';
-          const size = document.querySelector('#sizeGroup .active')?.dataset?.value || 'M';
-          addToCart({id, title, price, img, qty, color, size});
-          // feedback và chuyển tới giỏ
-          btn.classList.add('btn-success');
-          btn.textContent = 'Đã thêm ✓';
-          setTimeout(()=>{ window.location.href = '/pages/cart'; }, 600);
-        });
-      }
-    });
-  </script>
   </article>
 </body>
 </html>

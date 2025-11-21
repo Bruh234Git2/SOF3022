@@ -44,79 +44,141 @@
     </div>
 
   <script>
+    // CSRF token helper
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
     // Currency format helper
     function vnd(n){
       try{ return new Intl.NumberFormat('vi-VN').format(n) + ' đ'; }catch(e){ return n + ' đ'; }
     }
-    function loadCart(){
-      try{ return JSON.parse(localStorage.getItem('cart')||'[]'); }catch(e){ return []; }
-    }
-    function saveCart(items){
-      localStorage.setItem('cart', JSON.stringify(items));
-      // update navbar badge via storage event for other tabs and directly here
+
+    // Load cart từ backend API
+    async function loadCart(){
       try{
-        const badge = document.getElementById('cartCountBadge');
-        const count = items.reduce((s,i)=>s+(parseInt(i.qty||1)||1),0);
-        if(badge){ if(count>0){ badge.style.display='inline-block'; badge.textContent=count; } else { badge.style.display='none'; } }
-      }catch(e){}
+        const res = await fetch('/api/cart/items', {
+          headers: { [csrfHeader]: csrfToken }
+        });
+        if(!res.ok) return [];
+        return await res.json();
+      }catch(e){ console.error(e); return []; }
     }
-    function renderCart(){
+
+    // Update quantity
+    async function updateQty(cartId, newQty){
+      try{
+        const res = await fetch(`/api/cart/items/${cartId}`, {
+          method: 'PUT',
+          headers: { 
+            'Content-Type': 'application/json',
+            [csrfHeader]: csrfToken 
+          },
+          body: JSON.stringify({qty: newQty})
+        });
+        return res.ok;
+      }catch(e){ console.error(e); return false; }
+    }
+
+    // Delete item
+    async function deleteItem(cartId){
+      try{
+        const res = await fetch(`/api/cart/items/${cartId}`, {
+          method: 'DELETE',
+          headers: { [csrfHeader]: csrfToken }
+        });
+        return res.ok;
+      }catch(e){ console.error(e); return false; }
+    }
+
+    // Render cart
+    async function renderCart(){
       const body = document.getElementById('cartBody');
-      const items = loadCart();
+      const items = await loadCart();
       body.innerHTML = '';
-      items.forEach((it, idx)=>{
+      
+      if(items.length === 0){
+        body.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Giỏ hàng trống</td></tr>';
+        updateTotals([]);
+        return;
+      }
+
+      items.forEach((item)=>{
+        const prod = item.product || {};
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>
             <div class="d-flex align-items-center gap-3">
-              <img src="${it.img}" width="60" height="60" class="rounded" style="object-fit:cover" alt="img">
+              <img src="${prod.image || '/images/placeholder.svg'}" width="60" height="60" class="rounded" style="object-fit:cover" alt="img" onerror="this.src='/images/placeholder.svg'">
               <div>
-                <div class="fw-semibold">${it.title}</div>
-                <div class="text-muted small">Mã: ${it.id}${it.color?` • Màu: ${it.color}`:''}${it.size?` • Size: ${it.size}`:''}</div>
+                <div class="fw-semibold">${prod.name || 'Sản phẩm'}</div>
+                <div class="text-muted small">Mã: ${prod.id}${item.color ? ` • Màu: ${item.color}` : ''}${item.size ? ` • Size: ${item.size}` : ''}</div>
               </div>
             </div>
           </td>
           <td class="text-center" style="width:160px">
             <div class="input-group input-group-sm justify-content-center" style="max-width:140px;">
-              <button class="btn btn-outline-secondary" data-action="dec" data-index="${idx}">-</button>
-              <input type="text" class="form-control text-center" value="${it.qty||1}" readonly>
-              <button class="btn btn-outline-secondary" data-action="inc" data-index="${idx}">+</button>
+              <button class="btn btn-outline-secondary" data-action="dec" data-cart-id="${item.id}">-</button>
+              <input type="text" class="form-control text-center" value="${item.quantity || 1}" readonly>
+              <button class="btn btn-outline-secondary" data-action="inc" data-cart-id="${item.id}">+</button>
             </div>
           </td>
-          <td class="text-end">${vnd(it.price)}</td>
-          <td class="text-end">${vnd((it.price||0) * (it.qty||1))}</td>
-          <td class="text-end"><button class="btn btn-sm btn-outline-danger" data-action="del" data-index="${idx}">Xoá</button></td>
+          <td class="text-end">${vnd(prod.salePrice || 0)}</td>
+          <td class="text-end">${vnd((prod.salePrice || 0) * (item.quantity || 1))}</td>
+          <td class="text-end"><button class="btn btn-sm btn-outline-danger" data-action="del" data-cart-id="${item.id}">Xoá</button></td>
         `;
         body.appendChild(tr);
       });
-      // bind actions
+
+      // Bind actions
       body.querySelectorAll('[data-action]').forEach(btn=>{
-        btn.addEventListener('click', function(){
+        btn.addEventListener('click', async function(){
           const action = this.getAttribute('data-action');
-          const idx = parseInt(this.getAttribute('data-index'));
-          const items = loadCart();
-          if(isNaN(idx) || idx<0 || idx>=items.length) return;
-          if(action==='inc') items[idx].qty = (parseInt(items[idx].qty||1)||1) + 1;
-          if(action==='dec') items[idx].qty = Math.max(1, (parseInt(items[idx].qty||1)||1) - 1);
-          if(action==='del') { items.splice(idx,1); }
-          saveCart(items);
-          renderCart();
-          updateTotals();
+          const cartId = parseInt(this.getAttribute('data-cart-id'));
+          if(isNaN(cartId)) return;
+
+          const currentRow = this.closest('tr');
+          const qtyInput = currentRow.querySelector('input[type="text"]');
+          let currentQty = parseInt(qtyInput.value) || 1;
+
+          if(action === 'inc'){
+            await updateQty(cartId, currentQty + 1);
+          } else if(action === 'dec'){
+            if(currentQty > 1){
+              await updateQty(cartId, currentQty - 1);
+            }
+          } else if(action === 'del'){
+            if(confirm('Xóa sản phẩm này khỏi giỏ hàng?')){
+              await deleteItem(cartId);
+            }
+          }
+          
+          // Reload cart
+          await renderCart();
+          // Update navbar badge
+          window.location.reload();
         });
       });
-      updateTotals();
+
+      updateTotals(items);
     }
-    function updateTotals(){
-      const items = loadCart();
-      const subtotal = items.reduce((s,i)=> s + (i.price||0) * (parseInt(i.qty||1)||1), 0);
-      const discount = 0; // demo
-      const shipping = subtotal>0 ? 30000 : 0;
+
+    function updateTotals(items){
+      const subtotal = items.reduce((s, item) => {
+        const price = item.product?.salePrice || 0;
+        const qty = item.quantity || 1;
+        return s + (price * qty);
+      }, 0);
+      
+      const discount = 0;
+      const shipping = subtotal > 0 ? 30000 : 0;
       const total = subtotal - discount + shipping;
+
       document.getElementById('subtotalValue').textContent = vnd(subtotal);
-      document.getElementById('discountValue').textContent = '-' + vnd(discount).replace(' đ',' đ');
+      document.getElementById('discountValue').textContent = '-' + vnd(discount);
       document.getElementById('shippingValue').textContent = vnd(shipping);
       document.getElementById('totalValue').textContent = vnd(total);
     }
+
     document.addEventListener('DOMContentLoaded', function(){
       renderCart();
     });

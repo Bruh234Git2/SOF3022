@@ -6,7 +6,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import poly.edu.entity.Category;
 import poly.edu.entity.Product;
 import poly.edu.entity.ProductImage;
@@ -15,6 +18,7 @@ import poly.edu.repository.CategoryRepository;
 import poly.edu.repository.ProductImageRepository;
 import poly.edu.repository.ProductRepository;
 import poly.edu.repository.ProductReviewRepository;
+import poly.edu.service.CartService;
 import poly.edu.service.ProductService;
 
 import java.util.HashMap;
@@ -29,6 +33,7 @@ public class ProductController {
     private final ProductRepository productRepository;
     private final ProductImageRepository productImageRepository;
     private final ProductReviewRepository productReviewRepository;
+    private final CartService cartService;
 
     @GetMapping("/products")
     public String productList(
@@ -73,5 +78,25 @@ public class ProductController {
         model.addAttribute("avgRating", avg);
         model.addAttribute("reviewCount", reviews==null?0:reviews.size());
         return "pages/product-detail";
+    }
+
+    @PostMapping("/product/add-to-cart")
+    public String addToCart(
+            @RequestParam("productId") Integer productId,
+            @RequestParam(value = "qty", defaultValue = "1") Integer qty,
+            @RequestParam(value = "color", defaultValue = "Default") String color,
+            @RequestParam(value = "size", defaultValue = "M") String size,
+            RedirectAttributes ra
+    ){
+        try {
+            cartService.addToCart(productId, qty, color, size);
+            ra.addFlashAttribute("message", "Đã thêm sản phẩm vào giỏ hàng!");
+            ra.addFlashAttribute("messageType", "success");
+        } catch (RuntimeException e) {
+            ra.addFlashAttribute("message", "Không thể thêm vào giỏ hàng: " + e.getMessage());
+            ra.addFlashAttribute("messageType", "error");
+            return "redirect:/product/detail/" + productId;
+        }
+        return "redirect:/pages/cart";
     }
 }
