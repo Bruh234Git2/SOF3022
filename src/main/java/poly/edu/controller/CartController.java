@@ -4,12 +4,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dto.CartItemDTO;
+import poly.edu.dto.CartResponseDTO;
 import poly.edu.entity.Cart;
 import poly.edu.service.CartService;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/cart")
@@ -61,8 +63,17 @@ public class CartController {
      */
     @GetMapping("/items")
     public ResponseEntity<?> getCartItems() {
-        List<Cart> items = cartService.getCartItems();
-        return ResponseEntity.ok(items);
+        try {
+            List<Cart> items = cartService.getCartItems();
+            List<CartResponseDTO> response = items.stream()
+                    .map(CartResponseDTO::new)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Failed to load cart items: " + e.getMessage());
+            return ResponseEntity.status(500).body(error);
+        }
     }
 
     /**
@@ -130,5 +141,25 @@ public class CartController {
         Map<String, String> response = new HashMap<>();
         response.put("message", "Cart cleared");
         return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Debug endpoint để kiểm tra raw cart data
+     * GET /api/cart/debug
+     */
+    @GetMapping("/debug")
+    public ResponseEntity<?> debugCart() {
+        try {
+            List<Cart> items = cartService.getCartItems();
+            Map<String, Object> debug = new HashMap<>();
+            debug.put("itemCount", items.size());
+            debug.put("rawItems", items);
+            return ResponseEntity.ok(debug);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Debug failed: " + e.getMessage());
+            error.put("stackTrace", e.toString());
+            return ResponseEntity.status(500).body(error);
+        }
     }
 }
