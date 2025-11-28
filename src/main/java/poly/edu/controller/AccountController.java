@@ -26,11 +26,8 @@ import poly.edu.service.FileService;
 import poly.edu.service.ForgotPasswordMailService;
 import poly.edu.dto.ResetPasswordForm;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import java.time.LocalDateTime;
-import java.util.List;
 
-import poly.edu.entity.Product;
-
+//Cần cập nhật thành Rest APi
 @Controller
 @RequestMapping("/account")
 @RequiredArgsConstructor
